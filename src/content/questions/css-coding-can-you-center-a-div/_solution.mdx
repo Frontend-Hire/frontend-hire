@@ -1,4 +1,5 @@
-import { Callout, VideoEmbed } from '@/components/MarkdownComponents';
+import Callout from '@/components/mdx/callout.astro';
+import VideoEmbed from '@/components/mdx/video-embed.astro';
 
 # Solution
 
@@ -41,8 +42,9 @@ Depending on how confident you are, you might write something like this:
 </html>
 ```
 
-```css title="styles.css"
-/* [!code ++:11] */
+And the following CSS:
+
+```css title="styles.css" ins={1-11}
 .relative-box {
 	position: relative;
 }
@@ -59,10 +61,10 @@ Except it will only center the div horizontally. What is missing? The height on 
 
 So, then you would immediately add a height of `100vh` on the parent div.
 
-```css title="styles.css"
+```css title="styles.css" ins={3}
 .relative-box {
 	position: relative;
-	height: 100vh; /* [!code ++] */
+	height: 100vh;
 }
 ```
 
@@ -70,15 +72,15 @@ Alright, the `div` seems to be centered but here comes the tricky part. Why is t
 
 The issue is evident when you add background colors to the divs.
 
-```css title="styles.css"
+```css title="styles.css" ins={2, 8}
 .relative-box {
-	background-color: blue; /* [!code ++] */
+	background-color: blue;
 	position: relative;
 	height: 100vh;
 }
 
 .center {
-	background-color: red; /* [!code ++] */
+	background-color: red;
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -92,8 +94,7 @@ This is where we need to bring in a CSS reset or normalize.
 
 A very minimal CSS reset would be something like this:
 
-```css title="styles.css"
-/* [!code ++:5] */
+```css title="styles.css" ins={1-4}
 * {
 	margin: 0;
 	padding: 0;
@@ -118,13 +119,12 @@ Now the `div` is really centered with no side effects. Next, let us try the Flex
 
 We will preserve the CSS reset used above. Our `index.html` file would also remain the same as the previous solution.
 
-```css title="styles.css"
+```css title="styles.css" ins={6-15}
 * {
 	margin: 0;
 	padding: 0;
 }
 
-/* [!code ++:12] */
 .relative-box {
 	height: 100vh;
 }
@@ -150,7 +150,7 @@ Let us try the same solution of `Absolute Positioning` with Tailwind CSS.
 
 We need to bring in the Tailwind CSS CDN first.
 
-```html title="index.html"
+```html title="index.html" ins={7}
 <!doctype html>
 <html>
 	<head>
@@ -158,7 +158,6 @@ We need to bring in the Tailwind CSS CDN first.
 		<meta charset="UTF-8" />
 		<link rel="stylesheet" href="/styles.css" />
 		<script src="https://cdn.tailwindcss.com"></script>
-		<!-- [!code ++] -->
 	</head>
 
 	<body>
@@ -195,7 +194,7 @@ But wait this time, there is no vertical scroll bar and we did not apply any res
 
 Now, we will try the same solution of `Flexbox` with Tailwind CSS.
 
-```html title="index.html" {11-15}
+```html title="index.html" {11-14}
 <!doctype html>
 <html>
 	<head>
@@ -212,13 +211,3 @@ Now, we will try the same solution of `Flexbox` with Tailwind CSS.
 	</body>
 </html>
 ```
-
-## Resources to Refer
-
-- [How To Center a Div](https://www.joshwcomeau.com/css/center-a-div/)
-- [Meyer's CSS Reset](https://meyerweb.com/eric/tools/css/reset/)
-- [Josh's CSS Reset](https://www.joshwcomeau.com/css/custom-css-reset/)
-- [TailwindCSS's normalize](https://tailwindcss.com/docs/preflight)
-- [Normalize vs Reset](https://stackoverflow.com/questions/6887336/what-is-the-difference-between-normalize-css-and-reset-css)
-- [Josh's Guide to Flexbox](https://www.joshwcomeau.com/css/interactive-guide-to-flexbox/)
-- [CSS Tricks Guide to Flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)
