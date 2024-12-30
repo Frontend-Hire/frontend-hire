@@ -1,5 +1,6 @@
 ---
 import CourseCard from '@/components/course-card.astro';
+import Callout from '@/components/mdx/callout.astro';
 import PageHeading from '@/components/page-heading.astro';
 import SEO from '@/components/seo.astro';
 import BaseLayoutWithHeader from '@/layouts/base-layout-with-header.astro';
@@ -22,6 +23,17 @@ allCourses.sort(
 	<SEO slot='head' title={title} description={description} />
 	<main class='flex flex-col gap-4'>
 		<PageHeading title={title} description={description} />
+		<div class='prose mx-auto dark:prose-invert'>
+			<Callout type='tip' title='Resume Kit for Frontend Developers'>
+				<p>
+					<a href='https://topmate.io/iamyhr/1336239' target='_blank'
+						>Get our frontend developer resume kit</a
+					> that is built on top of these courses. It includes 7 resume templates
+					and instructions on how to best share the resume with others. Do note that
+					you have to pay a small fee for the access.
+				</p>
+			</Callout>
+		</div>
 		<ul
 			class='grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'
 		>
