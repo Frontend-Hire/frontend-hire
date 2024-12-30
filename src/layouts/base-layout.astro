@@ -2,13 +2,13 @@
 import ThemeBlockingScript from '@/scripts/theme-blocking-script.astro';
 
 import '@/styles/globals.css';
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 ---
 
 <html lang='en' class='scroll-pt-20 scroll-smooth'>
 	<head>
 		<slot name='head' />
-		<ViewTransitions fallback='swap' />
+		<ClientRouter fallback='swap' />
 		<ThemeBlockingScript />
 		<script
 			defer
