@@ -11,7 +11,10 @@ export default function HomePage() {
         Work on Practical Stuff And Get Hired or Build Your Own Product
       </h2>
       <div>
-        <Link className={buttonVariants({ color: 'primary' })} href="/learn">
+        <Link
+          className={buttonVariants({ color: 'primary' })}
+          href="/learn/frontend"
+        >
           Learn Now
         </Link>
       </div>
