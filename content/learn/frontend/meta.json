@@ -3,5 +3,11 @@
   "description": "Learn Frontend Skills",
   "icon": "Building2",
   "root": true,
-  "pages": ["---Introduction---", "index", "what-is-frontend-hire"]
+  "pages": [
+    "---Introduction---",
+    "index",
+    "what-is-frontend-hire",
+    "---Courses---",
+    "(todo-app-with-react-tdd-typescript)"
+  ]
 }
