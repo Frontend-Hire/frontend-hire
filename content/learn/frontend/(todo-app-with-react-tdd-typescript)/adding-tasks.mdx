@@ -1,0 +1,229 @@
+---
+title: Adding Tasks
+description: In this section, we'll add the ability to add tasks to the list.
+---
+
+<VideoEmbed
+  id="a-SVcyExHjs"
+  title="Reading and Adding Tasks | Todo App with React, TypeScript, TDD | Frontend Hire"
+/>
+
+Let us add interactivity by letting the user add tasks to the list. We'll add a text input and a button. When the user clicks the button, we'll add the text from the input to the list of tasks.
+
+## Adding a Text Input and Button
+
+First, add a text input and a button to the page. We'll add them just above the list of tasks.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+
+<div>
+  <h1>Tasks</h1>
+  // [!code ++:2]
+  <input />
+  <button>Add</button>
+  <ul>
+    {tasks.map((task) => (
+      <li key={task.id}>{task.title}</li>
+    ))}
+  </ul>
+</div>
+
+// Rest of the code omitted for brevity
+```
+
+Though this is good enough for now, we can and **should** make it more accessible by adding a label for the input and a `htmlFor` attribute on the label that matches the `id` of the input.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+
+<div>
+  <h1>Tasks</h1>
+  // [!code ++]
+  <label htmlFor="task-input">Add Task: </label>
+  // [!code highlight]
+  <input id="task-input" />
+  <button>Add</button>
+  <ul>
+    {tasks.map((task) => (
+      <li key={task.id}>{task.title}</li>
+    ))}
+  </ul>
+</div>
+
+// Rest of the code omitted for brevity
+```
+
+Now, clicking on the label will focus on the input.
+
+## Adding a Task
+
+The Add button doesn't do anything yet. Let's add a click handler to it that will log to the console for now.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+
+<div>
+  <h1>Tasks</h1>
+  <label htmlFor="task-input">Add Task: </label>
+  <input id="task-input" />
+  // [!code highlight:7]
+  <button
+    onClick={() => {
+      console.log('Add');
+    }}
+  >
+    Add
+  </button>
+  <ul>
+    {tasks.map((task) => (
+      <li key={task.id}>{task.title}</li>
+    ))}
+  </ul>
+</div>
+
+// Rest of the code omitted for brevity
+```
+
+Let's capture the value of the input and log it to the console. One of the ways to do this in React is to use a state variable to track the value of the input.
+
+We'll use the `useState` hook to create a state variable and a setter function. We'll also add a `value` attribute to the input and set it to the state variable. While we are at it, let's add an `onChange` handler to the input to update the state variable. This input is now a [controlled input](https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable).
+
+```tsx title="./src/App.tsx"
+import React from 'react'; // [!code ++]
+
+// Some of the code omitted for brevity
+
+function App() {
+  // Some of the code omitted for brevity
+
+  const [taskName, setTaskName] = React.useState(''); // [!code ++]
+
+  return (
+    <div>
+      {/* Some of the code omitted for brevity */}
+
+      <input
+        id="task-input"
+        value={taskName} // [!code ++]
+        onChange={(e) => setTaskName(e.target.value)} // [!code ++]
+      />
+      {/* Some of the code omitted for brevity */}
+    </div>
+  );
+}
+
+// Rest of the code omitted for brevity
+```
+
+Now, we can update the button click handler to log the value of the input.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+
+<button
+  onClick={() => {
+    console.log(taskName); // [!code highlight]
+  }}
+>
+  Add
+</button>
+
+// Rest of the code omitted for brevity
+```
+
+Before we can even add tasks to the list, we have to update our current `tasks` variable that holds our list of tasks to use state variables; otherwise, the list will not update when we add a task.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+
+function App() {
+  // [!code ++:8]
+  const [tasks, setTasks] = React.useState<Task[]>([
+    {
+      id: 1,
+      title: 'Learn React',
+      isCompleted: true,
+      priority: 'p1',
+    },
+  ]);
+
+  const [taskName, setTaskName] = React.useState('');
+
+  // Rest of the code omitted for brevity
+}
+```
+
+We can add a task to the list by updating the `tasks` state variable. We'll update the state variable using the `setTasks` setter function. We'll use the spread operator to create a new array with the new task added.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+
+<button
+  onClick={() => {
+    // [!code highlight:8]
+    setTasks([
+      ...tasks,
+      {
+        id: new Date().getTime(), // Not a great way to generate IDs
+        title: taskName,
+        isCompleted: false,
+      },
+    ]);
+  }}
+>
+  Add
+</button>
+
+// Rest of the code omitted for brevity
+```
+
+<Callout type="warn">
+  As discussed in the previous section, unique IDs are usually created by a
+  database. In this project, we'll use the [current time in
+  milliseconds](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTime)
+  as the ID for each task.
+</Callout>
+
+Great, we are now able to add tasks to the list!
+
+Our JSX code is getting a bit long, so let's separate the button's `onClick` handler into its own function. The input's `onChange` handler is **acceptable** for now.
+
+```tsx title="./src/App.tsx" {8-17, 23}
+// Rest of the code omitted for brevity
+
+function App() {
+  // Some of the code omitted for brevity
+
+  const [taskName, setTaskName] = React.useState('');
+
+  // [!code ++:10]
+  const onAddTask = () => {
+    setTasks([
+      ...tasks,
+      {
+        id: new Date().getTime(), // Not a great way to generate IDs
+        title: taskName,
+        isCompleted: false,
+      },
+    ]);
+  };
+
+  return (
+    <div>
+      {/* Some of the code omitted for brevity */}
+      // [!code highlight]
+      <button onClick={onAddTask}>Add</button>
+      {/* Some of the code omitted for brevity */}
+    </div>
+  );
+}
+
+export default App;
+```
+
+Awesome, but there are a ton of things that can go wrong when a user adds a task. For example, the user can add an empty task.
+
+This gives us a good opportunity to learn about **Testing**. We'll cover testing in the subsequent sections.
+
+At this point, your code should be a good match to the branch of the repository: [3-adding-tasks](https://github.com/Frontend-Hire/todo-app-react-tdd-typescript/tree/3-adding-tasks)

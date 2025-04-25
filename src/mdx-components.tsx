@@ -6,7 +6,7 @@ import VideoEmbed from './components/video-embed';
 export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
     ...defaultMdxComponents,
-    ...components,
     VideoEmbed: VideoEmbed,
+    ...components,
   };
 }
