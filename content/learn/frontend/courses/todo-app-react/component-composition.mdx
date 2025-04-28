@@ -1,0 +1,310 @@
+---
+title: Component Composition
+description: The power of composition.
+---
+
+<VideoEmbed
+  id="2RBypZuv0ZU"
+  title="Component Composition and Summary | Todo App with React, TypeScript, TDD | Frontend Hire"
+/>
+
+We really hate the fact that the [new React docs](https://react.dev/) do not contain the [Composition vs Inheritance](https://legacy.reactjs.org/docs/composition-vs-inheritance.html) section from the old docs.
+
+Either way, we will show you how to use composition to improve your code.
+
+## What is Component Composition?
+
+Component composition is the idea of using a component inside another component. This compelling idea allows you to build complex UIs out of simple components.
+
+We did this in the last section when we refactored the label, the input, and the button into a single component called `AddTask`, which we then used inside the `App` component.
+
+But let's look at a more specific case of composition.
+
+### TaskList and TaskListItem
+
+We currently have a list of tasks we're rendering in the `App` component. Let's extract that into a separate component called `TaskList`.
+
+```tsx title="./src/TaskList.tsx"
+// [!code ++:16]
+import { Task } from './types';
+
+type TaskListProps = {
+  tasks: Task[];
+};
+
+export default function TaskList({ tasks }: TaskListProps) {
+  return (
+    <ul>
+      {tasks.map((task) => (
+        <li key={task.id}>{task.title}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+Now, we can use this component inside the `App` component.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+import TaskList from './TaskList'; // [!code ++]
+
+function App() {
+  // Rest of the code omitted for brevity
+
+  return (
+    <div>
+      <h1>Tasks</h1>
+      <AddTask onAddTask={onAddTask} />
+      // [!code ++]
+      <TaskList tasks={tasks} />
+    </div>
+  );
+}
+
+// Rest of the code omitted for brevity
+```
+
+Let's also extract the `TaskListItem` component from `TaskList`.
+
+```tsx title="./src/TaskListItem.tsx"
+// [!code ++:7]
+type TaskListItemProps = {
+  title: string;
+};
+
+export default function TaskListItem({ title }: TaskListItemProps) {
+  return <li>{title}</li>;
+}
+```
+
+Now, we can use this component inside the `TaskList` component.
+
+```tsx title="./src/TaskList.tsx"
+// Rest of the code omitted for brevity
+import TaskListItem from './TaskListItem'; // [!code ++]
+
+// Some of the code omitted for brevity
+
+export default function TaskList({ tasks }: TaskListProps) {
+  return (
+    <ul>
+      {tasks.map((task) => (
+        <TaskListItem key={task.id} title={task.title} /> // [!code ++]
+      ))}
+    </ul>
+  );
+}
+```
+
+Our code is now more modular and easier to understand. Our UI is now composed of smaller components, too.
+
+This refactoring sounds okay, but we are passing a lot of unnecessary props compared to our initial implementation and lose some natural semantics in our code.
+
+- We pass the `title` prop to the `TaskListItem` component. It would be nicer if we could pass it like `<TaskListItem>{task.title}</TaskListItem>`.
+- We pass the `tasks` prop to the `TaskList` component and just forward the title from it to the `TaskListItem` component. It would be nicer if we could pass it like `<TaskList>{tasks.map(task => <TaskListItem>{task.title}</TaskListItem>)}</TaskList>`.
+
+Let's remove these unnecessary props by using composition.
+
+### Refactoring TaskListItem
+
+Instead of passing the `title` prop to the `TaskListItem` component. Let's have a more natural API for it. We'll pass the title as children to the `TaskListItem` component. [Read more about passing JSX as children](https://react.dev/learn/passing-props-to-a-component#passing-jsx-as-children).
+
+```tsx title="./src/TaskListItem.tsx"
+// [!code ++:3]
+export default function TaskListItem({ children }: React.PropsWithChildren) {
+  return <li>{children}</li>;
+}
+```
+
+Also, the `React.PropsWithChildren` type is generic. We can pass the props type to it like `React.PropsWithChildren<TaskListItemProps>`. This is equivalent to `TaskListItemProps & { children?: React.ReactNode }`.
+
+Now, we can use the `TaskListItem` component like this.
+
+```tsx title="./src/TaskList.tsx"
+// Rest of the code omitted for brevity
+
+export default function TaskList({ tasks }: TaskListProps) {
+  return (
+    <ul>
+      {tasks.map((task) => (
+        <TaskListItem key={task.id}>{task.title}</TaskListItem> // [!code ++]
+      ))}
+    </ul>
+  );
+}
+```
+
+### Refactoring TaskList
+
+Now, let's refactor the `TaskList` component. Instead of passing the `tasks` prop to the `TaskList` component, let's pass the JSX as children to the `TaskList` component.
+
+```tsx title="./src/TaskList.tsx"
+// [!code ++:3]
+export default function TaskList({ children }: React.PropsWithChildren) {
+  return <ul>{children}</ul>;
+}
+```
+
+Now, we can use the `TaskList` component like this. Remember to import the `TaskListItem` component.
+
+```tsx title="./src/App.tsx" {3, 12-16}
+// Rest of the code omitted for brevity
+import TaskList from './TaskList';
+import TaskListItem from './TaskListItem'; // [!code ++]
+
+function App() {
+  // Rest of the code omitted for brevity
+
+  return (
+    <div>
+      <h1>Tasks</h1>
+      <AddTask onAddTask={onAddTask} />
+      // [!code highlight:5]
+      <TaskList>
+        {tasks.map((task) => (
+          <TaskListItem key={task.id}>{task.title}</TaskListItem>
+        ))}
+      </TaskList>
+    </div>
+  );
+}
+
+// Rest of the code omitted for brevity
+```
+
+This code feels more natural and we're not passing any unneccessary props.
+
+<Callout>
+  Technically speaking, we are still passing the same props but in a different
+  way.
+</Callout>
+
+Let's see how powerful our composition is now. Assume we must show the number of tasks in the `TaskList` component. We can easily do that by adding a new component called `TaskListHeader` and using it inside the `TaskList` component.
+
+```tsx title="./src/TaskListHeader.tsx"
+// [!code ++:7]
+type TaskListHeaderProps = {
+  count: number;
+};
+
+export default function TaskListHeader({ count }: TaskListHeaderProps) {
+  return <h2>Total Tasks ({count})</h2>;
+}
+```
+
+Now, we can use this component inside the `App` component.
+
+```tsx title="./src/App.tsx"
+// Rest of the code omitted for brevity
+import TaskListHeader from './TaskListHeader'; // [!code ++]
+
+function App() {
+  // Rest of the code omitted for brevity
+
+  return (
+    <div>
+      <h1>Tasks</h1>
+      <AddTask onAddTask={onAddTask} />
+      <TaskList>
+        // [!code ++]
+        <TaskListHeader count={tasks.length} />
+        {tasks.map((task) => (
+          <TaskListItem key={task.id}>{task.title}</TaskListItem>
+        ))}
+      </TaskList>
+    </div>
+  );
+}
+
+// Rest of the code omitted for brevity
+```
+
+But we have a problem. The `TaskListHeader` component is not a list item inside the `TaskList` component. We can do this by creating a `slot` called `header` prop in the `TaskList` component and passing the `TaskListHeader` component to that slot.
+
+```tsx title="./src/TaskList.tsx" {1-3, 6, 8, 10, 11, 13}
+// [!code ++:3]
+type TaskListProps = {
+  header?: React.ReactNode;
+};
+
+export default function TaskList({
+  header, // [!code ++]
+  children,
+}: React.PropsWithChildren<TaskListProps>) {
+  return (
+    // [!code ++:2]
+    <>
+      {header}
+      <ul>{children}</ul>
+      // [!code ++]
+    </>
+  );
+}
+```
+
+Note how we pass the `TaskListHeader` component as a `header` prop to the `TaskList` component. Many folks do not know that you can pass `ReactNode` as props to components. This is how real composition works and is very powerful.
+
+### Performance Benefits
+
+There are also performance benefits to using composition. Let's say our `TaskList` component has a simple timer that updates every second. This would require state and effect in the `TaskList` component, but would that re-render the `TaskListItem` or the `TaskListHeader` component? Let's find out.
+
+```tsx title="./src/TaskList.tsx"
+import React from 'react'; // [!code ++]
+
+// Some of the code omitted for brevity
+
+export default function TaskList({
+  header,
+  children,
+}: React.PropsWithChildren<TaskListProps>) {
+  console.log('TaskList rendered'); // [!code ++]
+
+  const [secondsPassed, setSecondsPassed] = React.useState(0); // [!code ++]
+
+  // [!code ++:7]
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsPassed((secondsPassed) => secondsPassed + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <>
+      {header}
+      // [!code ++]
+      <p>Seconds passed: {secondsPassed}</p>
+      <ul>{children}</ul>
+    </>
+  );
+}
+```
+
+Let's add a `console.log` in the `TaskListItem` component.
+
+```tsx title="./src/TaskListItem.tsx"
+export default function TaskListItem({ children }: React.PropsWithChildren) {
+  console.log('TaskListItem Rendered'); // [!code ++]
+
+  return <li>{children}</li>;
+}
+```
+
+What do you see in the console? You should see that the `TaskListItem` component is not re-rendered. This is because React re-renders only if the state or props change. Since the `TaskListItem` component has no state or props that changed, it is not re-rendered.
+
+<Callout>
+
+This is a very powerful feature of React and can take time to wrap your head around. But once you do, you can write performant React code without fancy optimizations. We recommend reading the two articles below for a more detailed explanation.
+
+- [React Component Composition Explained](https://felixgerschau.com/react-component-composition/) by [Felix Gerschau](https://www.linkedin.com/in/felixgerschau/)
+- [The mystery of React Element, children, parents, and re-renders](https://www.developerway.com/posts/react-elements-children-parents) by [Nadia Makarevich](https://www.linkedin.com/in/adevnadia/)
+
+</Callout>
+
+Great, you can remove the `console.log` statements.
+
+In the next section, we'll summarise and leave you with a few suggestions for continuing this project to end up with a resume-worthy project.
+
+At this point, your code should be a good match to the branch of the repository: [8-component-composition](https://github.com/Frontend-Hire/todo-app-react-tdd-typescript/tree/8-component-composition)

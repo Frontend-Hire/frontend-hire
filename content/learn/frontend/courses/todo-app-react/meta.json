@@ -1,0 +1,15 @@
+{
+  "title": "Todo App with React, TypeScript, and TDD",
+  "description": "Todo apps are a great way to learn a new language or framework. We teach this course with more than React.",
+  "pages": [
+    "overview",
+    "project-setup",
+    "reading-tasks",
+    "adding-tasks",
+    "setup-testing",
+    "writing-tests",
+    "refactoring",
+    "component-composition",
+    "summary"
+  ]
+}
