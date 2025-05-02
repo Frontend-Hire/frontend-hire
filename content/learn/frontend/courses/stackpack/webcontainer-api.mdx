@@ -1,0 +1,304 @@
+---
+title: WebContainer API
+description: WebContainer API is what does most of the heavy lifting over here. It runs a server within the browser.
+---
+
+> WebContainers are a browser-based runtime for executing Node.js applications and operating system commands, entirely inside your browser tab. - [Introduction to WebContainers](https://webcontainers.io/guides/introduction#introduction)
+
+## Installation
+
+Let us install the dependency first. A single dependency is what we need.
+
+```sh
+npm i @webcontainer/api@1.1.9
+```
+
+## Usage
+
+First of all, due to the technology of WebContainer, we have to set up a couple of headers in our `vite.config.ts` file.
+
+```ts title="vite.config.ts"
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  // [!code ++:6]
+  server: {
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+    },
+  },
+});
+```
+
+We will create a context for the WebContainer API, and to share the context across the application, we will use React's Context API.
+
+```tsx title="src/providers/WebContainerProvider/WebContainerProvider.tsx"
+// [!code ++:53]
+import React from 'react';
+import { WebContainer } from '@webcontainer/api';
+import { Template } from '../../templates/react-vite';
+
+export const WebContainerContext = React.createContext<{
+  webContainer: WebContainer | null;
+  template: Template;
+}>({
+  webContainer: null,
+  template: {} as Template,
+});
+
+type WebContainerProviderProps = {
+  template: Template;
+};
+
+export default function WebContainerProvider({
+  template,
+  children,
+}: React.PropsWithChildren<WebContainerProviderProps>) {
+  const [webContainer, setWebContainer] = React.useState<WebContainer | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    let instance: WebContainer | null = null;
+    const initWebContainer = async () => {
+      try {
+        instance = await WebContainer.boot();
+        await instance.mount(template.files);
+        setWebContainer(instance);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+
+    initWebContainer();
+
+    // Ideally, we should clean up the WebContainer instance when the component is unmounted.
+    // But there is an issue with the current implementation of WebContainer that prevents it from being torn down.
+    // https://github.com/stackblitz/webcontainer-core/issues/1125
+    // return () => {
+    //   instance?.teardown();
+    //   setWebContainer(null);
+    // };
+  }, [template.files]);
+
+  return (
+    <WebContainerContext.Provider value={{ webContainer, template }}>
+      {children}
+    </WebContainerContext.Provider>
+  );
+}
+```
+
+The `useWebContainer` hook is used to get the context.
+
+```tsx title="src/providers/WebContainerProvider/useWebContainer.tsx"
+// [!code ++:13]
+import React from 'react';
+import { WebContainerContext } from '.';
+
+export const useWebContainer = () => {
+  const context = React.useContext(WebContainerContext);
+
+  if (!context) {
+    throw new Error(
+      'useWebContainer must be used within a WebContainerProvider',
+    );
+  }
+  return context;
+};
+```
+
+Barrel exports the provider.
+
+```tsx title="src/providers/WebContainerProvider/index.ts"
+// [!code ++:3]
+export * from './WebContainerProvider';
+
+export { default } from './WebContainerProvider';
+```
+
+The WebContainer API has its [own file system format](https://webcontainers.io/guides/working-with-the-file-system). So, we will also use the same file system and update our `TEMPLATE` to use the same. Do not worry much, and just copy-paste the below code.
+
+We get most of the type safety from TypeScript, and we can use the same to define our template.
+
+```ts title="src/templates/react-vite.ts"
+// [!code ++:91]
+import { FileSystemTree } from '@webcontainer/api';
+
+export type Template = {
+  files: FileSystemTree;
+  entry: string;
+  visibleFiles: string[];
+};
+
+export const VITE_REACT_TEMPLATE: Template = {
+  files: {
+    'App.jsx': {
+      file: {
+        contents: `export default function App() {
+    const data = "world"
+  
+    return <h1>Hello {data}</h1>
+  }
+  `,
+      },
+    },
+
+    'index.jsx': {
+      file: {
+        contents: `import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+
+import App from "./App";
+
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);`,
+      },
+    },
+
+    'index.html': {
+      file: {
+        contents: `<!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Vite App</title>
+    </head>
+    <body>
+      <div id="root"></div>
+      <script type="module" src="/index.jsx"></script>
+    </body>
+  </html>
+  `,
+      },
+    },
+
+    'package.json': {
+      file: {
+        contents: `{
+      "scripts": {
+          "dev": "vite",
+          "build": "vite build",
+          "preview": "vite preview"
+      },
+      "dependencies": {
+          "react": "^18.2.0",
+          "react-dom": "^18.2.0"
+      },
+      "devDependencies": {
+          "@vitejs/plugin-react": "3.1.0",
+          "vite": "4.1.4",
+          "esbuild-wasm": "0.17.12"
+      }
+  }`,
+      },
+    },
+    'vite.config.js': {
+      file: {
+        contents: `import { defineConfig } from "vite";
+  import react from "@vitejs/plugin-react";
+  
+  // https://vitejs.dev/config/
+  export default defineConfig({
+    plugins: [react()],
+  });
+  `,
+      },
+    },
+  },
+  entry: 'App.jsx',
+  visibleFiles: ['App.jsx', 'index.jsx', 'index.html'],
+};
+```
+
+We will also update the `CodeEditor` component to account for these changes.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import React from 'react';
+import { Editor } from '@monaco-editor/react';
+import FileTabs from './FileTabs';
+import { getLanguageFromFileName } from './getLanguageFromFileName';
+import { FileNode } from '@webcontainer/api'; // [!code ++]
+import { useWebContainer } from '../../providers/WebContainerProvider/useWebContainer'; // [!code ++]
+
+export default function CodeEditor() {
+  const { template } = useWebContainer(); // [!code ++]
+  const [activeFile, setActiveFile] = React.useState(() => template.entry); // [!code highlight]
+
+  const currentFile = template.files[activeFile] as FileNode; // [!code highlight]
+  const language = getLanguageFromFileName(activeFile);
+
+  return (
+    <div className="h-full">
+      <FileTabs
+        files={template.visibleFiles} // [!code highlight]
+        activeFile={activeFile}
+        onFileChange={setActiveFile}
+      />
+      <Editor
+        theme="vs-dark"
+        path={activeFile}
+        // [!code highlight]
+        defaultValue={currentFile.file.contents as string} // Ideally, worry about the encoding in production, for our example, this is fine.
+        defaultLanguage={language}
+      />
+    </div>
+  );
+}
+```
+
+We are now using the `template` from the context. We let the editor know that we are only working with `FileNode`. WebContainer API also supports directories. But for our use case, we are only working with files. It does add a lot of complexity to the code, and we are trying to keep it simple for this course. Also, file systems contents support `Uint8Array` as well. We are only working with strings for now.
+
+Great, there is still a lot of work to be done. But we have made a good start. Let us now update the `App` component to use the `WebContainerProvider`.
+
+```tsx title="src/App.tsx"
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import CodeEditor from './components/CodeEditor';
+import WebContainerProvider from './providers/WebContainerProvider'; // [!code ++]
+import { VITE_REACT_TEMPLATE } from './templates/react-vite';
+
+export default function App() {
+  return (
+    // [!code ++]
+    <WebContainerProvider template={VITE_REACT_TEMPLATE}>
+      <div className="h-dvh p-2">
+        <PanelGroup direction="horizontal">
+          <Panel>
+            <PanelGroup direction="vertical">
+              <Panel>
+                <CodeEditor />
+              </Panel>
+              <PanelResizeHandle className="h-2 bg-blue-300" />
+              <Panel>
+                <div className="h-full border bg-red-100">Terminal</div>
+              </Panel>
+            </PanelGroup>
+          </Panel>
+          <PanelResizeHandle className="w-2 bg-blue-300" />
+          <Panel>
+            <div className="h-full border bg-red-100">Preview</div>
+          </Panel>
+        </PanelGroup>
+      </div>
+      // [!code ++]
+    </WebContainerProvider>
+  );
+}
+```
+
+We have wrapped the `App` component with the `WebContainerProvider`. We have also passed the `VITE_REACT_TEMPLATE` to the provider. We are now ready to run the application.
+
+Alright, you would see an error in the console that we caught about the multiple instances of WebContainer. This is a [known issue](https://github.com/stackblitz/webcontainer-core/issues/1125) with the WebContainer API. We have to wait for the issue to be resolved. But for now, we can ignore it.
+
+In the next two sections, we will see wiring up the terminal and the preview section with the WebContainer API.
+
+At this point, our code should match the code in the branch [`4-webcontainer-api`](https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript/tree/4-webcontainer-api).

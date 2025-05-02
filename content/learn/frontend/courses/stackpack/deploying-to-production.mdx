@@ -1,0 +1,59 @@
+---
+title: Deploying to Production
+description: We have our application ready, and now it's time to deploy it to production.
+---
+
+<Callout>
+  This is a pretty new technology, and there is not a lot of documentation. If
+  you run into any issues, please let us know in the [Discord
+  community](https://discord.gg/DWAVqksVtx).
+</Callout>
+
+## Configuring Headers
+
+Remember the headers we set in our `vite.config.ts` file. That helps us in development but when we try to deploy the respective hosting provider reset those headers (basically not considering them).
+
+To fix this, we need to set the headers in the hosting provider itself. Here is [how you can do it in Vercel](https://webcontainers.io/guides/configuring-headers#vercel):
+
+We have already created a `vercel.json` file in our repo. It would have the following content:
+
+```json title='vercel.json'
+// [!code ++:17]
+{
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "require-corp"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        }
+      ]
+    }
+  ]
+}
+```
+
+## Deployment
+
+We want you to deploy the application to Vercel. Here is how you can do it:
+
+1. Push the changes to your GitHub repository.
+2. Go to [Vercel](https://vercel.com/) and sign in with your GitHub account.
+3. Click on the `Import Project` button.
+4. Select the repository you want to deploy.
+5. Configure the settings and click on the `Deploy` button.
+
+That's it! Your application is now live.
+
+If you are not using Vercel, you can follow the respective hosting provider's documentation to deploy the application and [the respective headers from here](https://webcontainers.io/guides/configuring-headers).
+
+## Troubleshooting
+
+We have deployed it and know that it works. But what if it doesn't? Try troubleshooting the issue. This is how you get better at it.
+
+[Further troubleshooting can be found here](https://webcontainers.io/guides/troubleshooting).

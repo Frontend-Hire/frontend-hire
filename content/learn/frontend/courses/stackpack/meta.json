@@ -1,0 +1,16 @@
+{
+  "title": "Stackpack",
+  "description": "Sandpack clone with WebContainers in React and TypeScript",
+  "pages": [
+    "overview",
+    "project-setup",
+    "building-layout",
+    "think-about-what-to-build-next",
+    "building-code-editor",
+    "webcontainer-api",
+    "building-terminal",
+    "building-preview",
+    "deploying-to-production",
+    "summary"
+  ]
+}

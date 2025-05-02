@@ -1,0 +1,101 @@
+---
+title: Overview
+description: Sandpack clone with WebContainers in React and TypeScript
+---
+
+This is the first ever course (at least that we know of as of 19th April 2024) that teaches you how to build a [Sandpack](https://sandpack.codesandbox.io/) clone using [WebContainers](https://webcontainers.io/).
+
+## Introduction
+
+Let us understand what it used to be like before Sandpack and WebContainers.
+
+Imagine, you are building something like a coding practice platform like [Frontend Hire](https://www.frontendhire.com/), [GreatFrontend](https://www.greatfrontend.com/), [LeetCode](https://leetcode.com/), [AlgoExpert](https://www.algoexpert.io/product), [Algochurn](https://www.algochurn.com/), etc. You want users to write code in the browser and see the output in real-time. Or maybe you are building a new web framework and want to give users a way to try it out without setting up a dev environment like how [React](https://react.dev/) or [Svelte](https://svelte.dev/) do.
+
+We used to have a couple of options:
+
+## Options
+
+### 1. CodePen, JSFiddle, etc.
+
+These online code editors allow you to write code in the browser and see the output in real-time without involving a server. But, they are not designed for modern JavaScript frameworks like React, Vue, Svelte, etc. They are like a playground for vanilla JavaScript, HTML, and CSS.
+
+- You could embed these editors in your website, creating a not-so-unique experience.
+- We could not find great examples of this.
+
+### 2. CodeSandbox, StackBlitz, etc.
+
+These online code editors allow you to write code in the browser and see the output in real-time. They are designed for modern JavaScript frameworks like React, Vue, Svelte, etc. But they stream the response from the server, which means there is a delay in seeing the output.
+
+- You could embed these editors in your website, creating a not-so-unique experience.
+- Feedback depends on the server's response time (now that they also use Sandpack and WebContainers, this is instant).
+- Algochurn does this using StackBlitz.
+
+### 3. Custom Setup similar to CodeSandbox, StackBlitz
+
+You build your version of CodeSandbox or StackBlitz. You send the input code to the server, and the server compiles the code and streams the output back to the client.
+
+- Has a unique experience but requires a server to compile the code.
+- Feedback depends on the server's response time.
+- AlgoExpert and LeetCode do this.
+
+<Callout>
+  Sandpack does not support other languages like Python, Java, etc.
+  WebContainers does [through WASI (WebAssembly System
+  Interface)](https://blog.stackblitz.com/posts/announcing-wasi/).
+</Callout>
+
+## How WebContainers and Sandpack are a better option
+
+> Sandpack is an open ecosystem of components and utilities that allow you to compile and run modern JavaScript frameworks in the browser. - [What is Sandpack?](https://sandpack.codesandbox.io/docs/resources/faq#what-is-sandpack)
+
+> WebContainers are a browser-based runtime for executing Node.js applications and operating system commands, entirely inside your browser tab. - [Introduction to WebContainers](https://webcontainers.io/guides/introduction#introduction)
+
+![An image showing two different approaches for executing code written in a browser. The top half, labeled "Regular Server Approach," depicts a two-step process with arrows indicating interaction between the "Browser" and "Server" boxes. The browser box contains the text "User writes code and clicks on a run button or is debounced," while the server box states, "Compiles the code and streams the output back." The bottom half, labeled "WebContainers and Sandpack Approach," shows a large box with the text "Everything happens in the browser." The overall message is that the regular server approach involves a server compiling the code, whereas the WebContainers and Sandpack approach compiles and runs code entirely within the browser. The diagram uses a color scheme with red for the server approach and green for the WebContainers and Sandpack approach.](./assets/WebContainersVsServer.webp)
+
+Simply put, Sandpack and WebContainers allow you to have local dev server equivalents in the browser. The advantages are just too many:
+
+- Instant feedback.
+- No server required.
+- Cost-effective.
+- Secure.
+
+Read more about the advantages from the WebContainers docs: [WebContainers versus cloud VM approach](https://webcontainers.io/guides/introduction#webcontainers-versus-cloud-vm-approach)
+
+The underlying technology that powers Sandpack is [Nodebox](https://sandpack.codesandbox.io/docs/advanced-usage/nodebox).
+
+WebContainers is a similar technology that allows you to run dev servers in the browser. They do not have a UI like Sandpack, but you can build one on top of their APIs, **which is exactly what we will do in this course.**
+
+## Course Overview
+
+In this course, we will build a Sandpack clone using WebContainers, which we call Stackpack. We will use React and TypeScript to create the UI and WebContainers to run the code in the browser.
+
+![An illustration of a software development environment interface divided into three sections. On the left, a large panel labeled "Code Editor" is designed for writing and editing code. Below it, a smaller panel is marked "Terminal," typically used for command line operations. To the right, there's another large panel labeled "Browser Output," where the results of the code executed in the editor can be viewed. The layout suggests an integrated development environment (IDE) with real-time code execution and output display. Two small, indistinct icons within the interface suggest a resizable panel handle. The background is dark, with white text for labels, giving it a sleek, modern look.](./assets/what-are-we-building.webp)
+
+All the things that we will cover:
+
+- [Monaco Editor](https://github.com/microsoft/monaco-editor): The editor that powers VSCode. We will use the [React wrapper](https://github.com/suren-atoyan/monaco-react) for it.
+- [WebContainers](https://webcontainers.io/): The technology that enables running Node.js applications and operating system commands in the browser.
+- [Xterm.js](https://xtermjs.org/): The terminal emulator.
+- [ResizeObserver](https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver): The Web API we will use to handle callbacks when the size of the terminal changes. We will first use it without a wrapper and then refactor to use the [React wrapper](https://github.com/ZeeCoder/use-resize-observer).
+- [React](https://react.dev/): The UI library.
+- [TypeScript](https://www.typescriptlang.org/): The language we will use to write the code.
+- [Tailwind CSS](https://tailwindcss.com/): The utility-first CSS framework we will use for styling.
+- [React Resizeable Panels](https://react-resizable-panels.vercel.app/): The library we will use to create resizable panels.
+- [clsx](https://www.npmjs.com/package/clsx): The utility for conditionally joining class names.
+- [tailwind-merge](https://www.npmjs.com/package/tailwind-merge): The utility to merge Tailwind CSS classes.
+
+<Callout>
+  This course will not cover the basics of React, TypeScript, Tailwind CSS, etc.
+  It would be best if you had a basic understanding of these technologies. We
+  will try to keep the code as production-ready as possible but will not cover
+  testing, deployment, CI/CD, etc. We also do not worry too much about our
+  design choices. We will focus on the functionality.
+</Callout>
+
+## Further Reading
+
+- [CodeSandbox drives Sandpack and Nodebox](https://codesandbox.io/blog/announcing-sandpack-2).
+- [StackBlitz drives WebContainers](https://blog.stackblitz.com/posts/introducing-webcontainers/).
+- [How Nodebox differs from WebContainers](https://sandpack.codesandbox.io/docs/advanced-usage/nodebox#difference-with-webcontainers)
+- [React uses Sandpack in their docs to showcase examples](https://react.dev/blog/2023/03/16/introducing-react-dev).
+- [Svelte and SvelteKit use WebContainers in their interactive tutorials](https://blog.stackblitz.com/posts/webcontainer-api-is-here/).

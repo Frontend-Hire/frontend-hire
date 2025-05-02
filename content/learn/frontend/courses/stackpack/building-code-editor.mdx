@@ -1,0 +1,500 @@
+---
+title: Building Code Editor
+description: Though the title says "Building Code Editor," we would do more of an "Assembling Code Editor."
+---
+
+Code Editors are extremely challenging to build from scratch, and there is no reason for anyone to create something like that from scratch. There are three great open-source options:
+
+- [**Ace**](https://ace.c9.io/): The editor that powers Cloud9 IDE. It is a great editor that powers many online code editors. It is a bit old and not as actively maintained as it used to be.
+
+- [**Monaco Editor**](https://github.com/microsoft/monaco-editor): The editor that powers VSCode. This course will use the [React wrapper](https://github.com/suren-atoyan/monaco-react).
+
+- [**CodeMirror**](https://codemirror.net/): A minimalist code editor that is highly extensible. We used this (in v1, now deprecated) on the Frontend Hire coding workspace.
+
+All the editors are great, and you can use any of them. This course will use Monaco Editor. We used CodeMirror on the Frontend Hire (in v1, now deprecated) coding workspace because it is lightweight and feels cleaner for practicing coding. We did not use Ace to have much of an opinion on it.
+
+You can read more about the differences between the editors [Ace, CodeMirror, and Monaco: A Comparison of the Code Editors You Use in the Browser](https://blog.replit.com/code-editors). It is an excellent comparison from Faris Masad at Replit.
+
+## Setting Up Monaco Editor
+
+As mentioned, we will use the [React wrapper for Monaco Editor](https://github.com/suren-atoyan/monaco-react).
+
+Let us install it:
+
+```sh
+npm install @monaco-editor/react@4.6.0
+```
+
+Let us create a component called `CodeEditor.tsx` to render the code editor and other things like the files tab. We will place this component in the `components` folder inside its folder `CodeEditor`, do a barrel export, and render it in our `App.tsx`. [Joshua Comeau's Delightful React File Structure](https://www.joshwcomeau.com/react/file-structure/) inspired this structure.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+// [!code ++:3]
+export default function CodeEditor() {
+  return <div className="h-full border bg-red-100">Code Editor</div>;
+}
+```
+
+```tsx title="src/components/CodeEditor/index.ts"
+// [!code ++:3]
+export * from './CodeEditor';
+
+export { default } from './CodeEditor';
+```
+
+```tsx title="src/App.tsx"
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import CodeEditor from './components/CodeEditor'; // [!code ++]
+
+export default function App() {
+  return (
+    <div className="h-dvh p-2">
+      <PanelGroup direction="horizontal">
+        <Panel>
+          <PanelGroup direction="vertical">
+            <Panel>
+              // [!code ++]
+              <CodeEditor />
+            </Panel>
+            <PanelResizeHandle className="h-2 bg-blue-300" />
+            <Panel>
+              <div className="h-full border bg-red-100">Terminal</div>
+            </Panel>
+          </PanelGroup>
+        </Panel>
+        <PanelResizeHandle className="w-2 bg-blue-300" />
+        <Panel>
+          <div className="h-full border bg-red-100">Preview</div>
+        </Panel>
+      </PanelGroup>
+    </div>
+  );
+}
+```
+
+We will now render the Monaco Editor in the `CodeEditor` component.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import { Editor } from '@monaco-editor/react'; // [!code ++]
+
+export default function CodeEditor() {
+  return (
+    // [!code highlight]
+    <div className="h-full">
+      // [!code ++]
+      <Editor theme="vs-dark" />
+    </div>
+  );
+}
+```
+
+The `Editor` component takes a `theme` prop. We set it to `vs-dark` to use the dark theme. You can set it to `light` or omit it for the light theme.
+
+The editor now renders, but we must use the [multi-modal editor](https://github.com/suren-atoyan/monaco-react?tab=readme-ov-file#multi-model-editor) to support different files and languages. Before we do that, let us think about how we want to set up our code template.
+
+## Thinking our Code Template
+
+<Callout type="warn">
+  WebContainer API has its [own
+  way](https://webcontainers.io/guides/working-with-the-file-system) of working
+  with files and folders; ideally, we would like to use a structure that mimics
+  it. We will do the refactor in the next section when we integrate the
+  WebContainer API. We know this because we did a POC with the API and have read
+  the documentation well enough. We are not doing it now because the code editor
+  is a complex component, and we want to understand it first before adding the
+  WebContainer API.
+</Callout>
+
+In this course, we will only support React with Vite support. The files would take a top-level structure with the following files:
+
+- `App.jsx`: The main React component.
+- `index.jsx`: The entry file that renders the `App` component.
+- `index.html`: The HTML file that loads the React app.
+- `package.json`: The package file with the dependencies.
+- `vite.config.js`: The Vite configuration file.
+
+We can use an object to represent the files. The keys would be the file names, and the value would be another object holding more information about the file, such as the contents. We could add more properties like `readOnly` and `hidden` to control the file's behavior in the editor. But for now, let us keep it simple with just the `contents` property.
+
+The types would look like this:
+
+```ts
+type CodeFile = {
+  contents: string;
+};
+
+type Template = {
+  files: Record<string, CodeFile>;
+  entry: string;
+  visibleFiles: string[];
+};
+```
+
+We use CodeFile instead of File to represent the file to avoid conflicts with the [File Interface](https://developer.mozilla.org/en-US/docs/Web/API/File) in JavaScript. We use a Template to describe the code template. We are also not using an array for the files because we want to access the files by their names.
+
+Next up is the actual template. We will create a `templates` folder in the `src` folder and place the template in a file called `react-vite.ts` along with the types.
+
+```ts title="src/templates/react-vite.ts"
+// [!code ++:83]
+type CodeFile = {
+  contents: string;
+};
+
+type Template = {
+  files: Record<string, CodeFile>;
+  entry: string;
+  visibleFiles: string[];
+};
+
+export const VITE_REACT_TEMPLATE: Template = {
+  files: {
+    'App.jsx': {
+      contents: `export default function App() {
+  const data = "world"
+
+  return <h1>Hello {data}</h1>
+}
+`,
+    },
+
+    'index.jsx': {
+      contents: `import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+
+import App from "./App";
+
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);`,
+    },
+
+    'index.html': {
+      contents: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.jsx"></script>
+  </body>
+</html>
+`,
+    },
+
+    'package.json': {
+      contents: `{
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "3.1.0",
+        "vite": "4.1.4",
+        "esbuild-wasm": "0.17.12"
+    }
+}`,
+    },
+    'vite.config.js': {
+      contents: `import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+});
+`,
+    },
+  },
+  entry: 'App.jsx',
+  visibleFiles: ['App.jsx', 'index.jsx', 'index.html'],
+};
+```
+
+Now, let us use the template and try to populate our multi-modal editor.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import React from 'react';
+import { Editor } from '@monaco-editor/react';
+import { VITE_REACT_TEMPLATE } from '../../templates/react-vite'; // [!code ++]
+
+export default function CodeEditor() {
+  // [!code ++:3]
+  const [activeFile, setActiveFile] = React.useState(
+    () => VITE_REACT_TEMPLATE.entry,
+  );
+
+  const currentFile = VITE_REACT_TEMPLATE.files[activeFile]; // [!code ++]
+
+  return (
+    <div className="h-full">
+      <Editor
+        theme="vs-dark"
+        // [!code ++:2]
+        path={activeFile}
+        defaultValue={currentFile.contents}
+      />
+    </div>
+  );
+}
+```
+
+The `path` prop is what enables this multi-modal editor. It tells the editor which files it is editing. The `defaultValue` prop sets the initial value of the editor. We use the `activeFile` state to keep track of the active file. We set it to the `entry` property of the template to start with the entry file.
+
+We also derive the `currentFile` from the `activeFile` to get the current file's contents. We use this to set the editor's default (initial) value. But how do we switch between files? We will add a files tab to the editor's top to switch between files.
+
+## Adding Files Tab
+
+This files tab will be a simple list of files we can click to switch between files. We will use the `visibleFiles` property of the template to determine which files are visible. For the sake of simplicity, we will use a `button` element to represent each file. We will also add some styles to make it look like a tab. We will use the `activeFile` state to determine which file is active.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import React from 'react';
+import { Editor } from '@monaco-editor/react';
+import { VITE_REACT_TEMPLATE } from '../../templates/react-vite';
+
+export default function CodeEditor() {
+  const [activeFile, setActiveFile] = React.useState(
+    () => VITE_REACT_TEMPLATE.entry,
+  );
+
+  const currentFile = VITE_REACT_TEMPLATE.files[activeFile];
+
+  return (
+    <div className="h-full">
+      // [!code ++:12]
+      <ul className="flex">
+        {VITE_REACT_TEMPLATE.visibleFiles.map((file) => (
+          <li key={file}>
+            <button
+              className={`bg-gray-800 px-2 py-1 text-white hover:bg-gray-700 ${activeFile === file ? 'bg-gray-950 hover:bg-gray-900' : ''}`}
+              onClick={() => setActiveFile(file)}
+            >
+              {file}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <Editor
+        theme="vs-dark"
+        path={activeFile}
+        defaultValue={currentFile.contents}
+      />
+    </div>
+  );
+}
+```
+
+We can now render the respective file when we click the file tab. We can also see the active file highlighted. We can now switch between files.
+
+Clean up the code by extracting the file tab into its component.
+
+We will create a `FileTabs` component in a single file, `FileTabs.tsx`, in the `components/CodeEditor` folder. We will also add some styles to make it look better and handle a bit of overflow.
+
+```tsx title="src/components/CodeEditor/FileTabs.tsx"
+// [!code ++:28]
+type FileTabsProps = {
+  activeFile: string;
+  onFileChange: (filename: string) => void;
+  files: string[];
+};
+
+export default function FileTabs({
+  files,
+  activeFile,
+  onFileChange,
+}: FileTabsProps) {
+  return (
+    <ul className="flex overflow-x-auto overflow-y-hidden bg-gray-800">
+      {files.map((fileName) => (
+        <li key={fileName}>
+          <button
+            className={`bg-gray-800 px-2 py-1 text-white hover:bg-gray-700 ${activeFile === fileName ? 'bg-gray-950 hover:bg-gray-900' : ''}`}
+            onClick={() => onFileChange(fileName)}
+          >
+            {fileName}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+We can now use this component in the `CodeEditor` component.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import React from 'react';
+import { Editor } from '@monaco-editor/react';
+import { VITE_REACT_TEMPLATE } from '../../templates/react-vite';
+import FileTabs from './FileTabs'; // [!code ++]
+
+export default function CodeEditor() {
+  const [activeFile, setActiveFile] = React.useState(
+    () => VITE_REACT_TEMPLATE.entry,
+  );
+
+  const currentFile = VITE_REACT_TEMPLATE.files[activeFile];
+
+  return (
+    <div className="h-full">
+      // [!code highlight:5]
+      <FileTabs
+        files={VITE_REACT_TEMPLATE.visibleFiles}
+        activeFile={activeFile}
+        onFileChange={setActiveFile}
+      />
+      <Editor
+        theme="vs-dark"
+        path={activeFile}
+        defaultValue={currentFile.contents}
+      />
+    </div>
+  );
+}
+```
+
+Great, we should also use better logic to handle conditional classes. The best way to merge the classes is to use [`clsx`](https://github.com/lukeed/clsx) and [`tailwind-merge`](https://github.com/dcastil/tailwind-merge).
+
+`clsx` helps with the conditional stuff, while `tailwind-merge` helps merge the classes.
+
+Let us install them:
+
+```sh
+npm install clsx@2.1.0 tailwind-merge@2.2.2
+```
+
+We will create a utility function to handle these classes.
+
+```ts title="src/utils/classNames.ts"
+// [!code ++:6]
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+Let's use this utility function in the `FileTabs` component.
+
+```tsx title="src/components/CodeEditor/FileTabs.tsx"
+import { cn } from '../../utils/classNames'; // [!code ++]
+
+type FileTabsProps = {
+  activeFile: string;
+  onFileChange: (filename: string) => void;
+  files: string[];
+};
+
+export default function FileTabs({
+  files,
+  activeFile,
+  onFileChange,
+}: FileTabsProps) {
+  return (
+    <ul className="flex overflow-x-auto overflow-y-hidden bg-gray-800">
+      {files.map((fileName) => (
+        <li key={fileName}>
+          // [!code highlight:5]
+          <button
+            className={cn(
+              'bg-gray-800 px-2 py-1 text-white hover:bg-gray-700',
+              activeFile === fileName && 'bg-gray-950 hover:bg-gray-900',
+            )}
+            onClick={() => onFileChange(fileName)}
+          >
+            {fileName}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+One more important thing to do is to handle the editor's language. We can use the file extension to determine the language. Monaco Editor supports many languages; we can use the `defaultLanguage` prop to set the language. We will use the `activeFile` state to get the file extension and set the language accordingly.
+
+Let us create a utility function to get the language from the file extension.
+
+```ts title="src/components/CodeEditor/getLanguageFromFileName.ts"
+// [!code ++:17]
+export const getLanguageFromFileName = (fileName: string) => {
+  const extension = fileName.split('.').pop();
+  switch (extension) {
+    case 'ts':
+    case 'tsx':
+      return 'typescript';
+    case 'js':
+    case 'jsx':
+      return 'javascript';
+    case 'json':
+      return 'json';
+    case 'html':
+      return 'html';
+    default:
+      return 'plaintext';
+  }
+};
+```
+
+And use it in the `CodeEditor` component.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import React from 'react';
+import { Editor } from '@monaco-editor/react';
+import { VITE_REACT_TEMPLATE } from '../../templates/react-vite';
+import FileTabs from './FileTabs';
+import { getLanguageFromFileName } from './getLanguageFromFileName'; // [!code ++]
+
+export default function CodeEditor() {
+  const [activeFile, setActiveFile] = React.useState(
+    () => VITE_REACT_TEMPLATE.entry,
+  );
+
+  const currentFile = VITE_REACT_TEMPLATE.files[activeFile];
+  const language = getLanguageFromFileName(activeFile); // [!code ++]
+
+  return (
+    <div className="h-full">
+      <FileTabs
+        files={VITE_REACT_TEMPLATE.visibleFiles}
+        activeFile={activeFile}
+        onFileChange={setActiveFile}
+      />
+      <Editor
+        theme="vs-dark"
+        path={activeFile}
+        defaultValue={currentFile.contents}
+        defaultLanguage={language} // [!code ++]
+      />
+    </div>
+  );
+}
+```
+
+These are the basics of building a code editor. We have a multi-modal editor that can switch between files and set the language based on the file extension. We also have a file tab to switch between files.
+
+<Callout>
+  What is the difference between `value` and `defaultValue`? Similarly, what is
+  the difference between `language` and `defaultLanguage`, `path` and
+  `defaultPath`? The `default` prefix is used to set the initial value,
+  language, path of the editor during its creation. The `value`, `language`, and
+  `path` props are used to update the editor's value, language, and path after
+  the editor has been created. In most cases, you can use the `value`,
+  `lanuage`, and `path` props instead of the `default` ones. But for multi-modal
+  editor, it would be best to use the `default` ones to set the initial values
+  except for the path. Otherwise, your changes will be lost when you switch
+  between the files.
+</Callout>
+
+In the next section, we will focus on the following core feature of our project: the integration of the WebContainer API.
+
+At this point, our code should match the code in the branch [`3-monaco-editor`](https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript/tree/3-monaco-editor).

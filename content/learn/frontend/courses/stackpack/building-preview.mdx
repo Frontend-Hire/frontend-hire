@@ -1,0 +1,182 @@
+---
+title: Building Preview
+description: Let us build out a preview for our live changes
+---
+
+## Setting up Preview component
+
+Create a new file called `Preview.tsx` and the respective barrel file `index.ts` in the `src/components/Preview` directory.
+
+```tsx title="src/components/Preview/Preview.tsx"
+// [!code ++:3]
+export default function Preview() {
+  return <div className="h-full border bg-red-100">Preview</div>;
+}
+```
+
+Barrel export the file.
+
+```tsx title="src/components/Preview/index.ts"
+// [!code ++:3]
+export * from './Preview';
+
+export { default } from './Preview';
+```
+
+We can now import the `Preview` component in the `App.tsx` file and render it.
+
+```tsx title="src/App.tsx"
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import CodeEditor from './components/CodeEditor';
+import WebContainerProvider from './providers/WebContainerProvider';
+import { VITE_REACT_TEMPLATE } from './templates/react-vite';
+import Terminal from './components/Terminal';
+import Preview from './components/Preview'; // [!code ++]
+
+export default function App() {
+  return (
+    <WebContainerProvider template={VITE_REACT_TEMPLATE}>
+      <div className="h-dvh p-2">
+        <PanelGroup direction="horizontal">
+          <Panel>
+            <PanelGroup direction="vertical">
+              <Panel>
+                <CodeEditor />
+              </Panel>
+              <PanelResizeHandle className="h-2 bg-blue-300" />
+              <Panel>
+                <Terminal />
+              </Panel>
+            </PanelGroup>
+          </Panel>
+          <PanelResizeHandle className="w-2 bg-blue-300" />
+          <Panel>
+            // [!code highlight]
+            <Preview />
+          </Panel>
+        </PanelGroup>
+      </div>
+    </WebContainerProvider>
+  );
+}
+```
+
+## Using iframe for Preview
+
+We need a truly dynamic preview component that can render any HTML content. `iframe` elements help achieve this. Let's update the `Preview` component to use an iframe.
+
+```tsx title="src/components/Preview/Preview.tsx"
+import React from 'react'; // [!code ++]
+
+export default function Preview() {
+  // [!code ++]
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+
+  return (
+    // [!code ++:5]
+    <iframe
+      ref={iframeRef}
+      className="h-full w-full border-2"
+      src="loading.html"
+    />
+  );
+}
+```
+
+We need to create a new file called `loading.html` at the root of our project. This file will be used to display a loading message while the preview is being loaded.
+
+```html title="loading.html"
+Use the terminal to run a command!
+```
+
+## Wiring up the Preview component with WebContainer API
+
+We need to update the `Preview` component to listen to the `webContainer` context and update the iframe content accordingly.
+
+We get a `server-ready` event from the `webContainer` context when the server is ready to serve the preview content. We can listen to this event and update the iframe content.
+
+```tsx title='src/components/Preview/Preview.tsx'
+import React from 'react';
+import { useWebContainer } from '../../providers/WebContainerProvider/useWebContainer'; // [!code ++]
+
+export default function Preview() {
+  const { webContainer } = useWebContainer(); // [!code ++]
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+
+  // [!code ++:7]
+  React.useEffect(() => {
+    if (!webContainer || !iframeRef.current) return;
+
+    webContainer.on('server-ready', (_, url) => {
+      iframeRef.current!.src = url;
+    });
+  }, [webContainer]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      className="h-full w-full border-2"
+      src="loading.html"
+    />
+  );
+}
+```
+
+Now, run the dev server through the terminal we built earlier and see the preview in action.
+
+```sh
+npm run dev
+```
+
+![Final Output](./assets/6-building-preview.webp)
+
+## Updating the Preview on code changes
+
+But, we can see that the preview is not updating when we make changes to the code. We need to update the `webContainer` to serve the updated content when the code changes.
+
+```tsx title="src/components/CodeEditor/CodeEditor.tsx"
+import React from 'react';
+import { Editor } from '@monaco-editor/react';
+import FileTabs from './FileTabs';
+import { getLanguageFromFileName } from './getLanguageFromFileName';
+import { FileNode } from '@webcontainer/api';
+import { useWebContainer } from '../../providers/WebContainerProvider/useWebContainer'; // [!code ++]
+
+export default function CodeEditor() {
+  const { template, webContainer } = useWebContainer();
+  const [activeFile, setActiveFile] = React.useState(() => template.entry);
+
+  const currentFile = template.files[activeFile] as FileNode;
+  const language = getLanguageFromFileName(activeFile);
+
+  // [!code ++:5]
+  const handleCodeChange = async (content: string) => {
+    if (!webContainer) return;
+
+    await webContainer.fs.writeFile(activeFile, content);
+  };
+
+  return (
+    <div className="h-full">
+      <FileTabs
+        files={template.visibleFiles}
+        activeFile={activeFile}
+        onFileChange={setActiveFile}
+      />
+      <Editor
+        theme="vs-dark"
+        path={activeFile}
+        onChange={(value) => handleCodeChange(value ?? '')} // [!code ++]
+        defaultValue={currentFile.file.contents as string} // Ideally, worry about the encoding in production, for our example, this is fine.
+        defaultLanguage={language}
+      />
+    </div>
+  );
+}
+```
+
+By writing to the WebContainer API's file system, we can update the preview content when the code changes. The Monaco editor's `onChange` event triggers the `handleCodeChange` function, which writes the updated content to the file system.
+
+Now, you should see the preview updating as you make changes to the code.
+
+At this point, our code should match the code in the branch [`6-building-preview`](https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript/tree/6-building-preview).
