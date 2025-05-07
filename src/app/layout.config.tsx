@@ -37,6 +37,11 @@ export const baseOptions: BaseLayoutProps = {
   },
   links: [
     {
+      type: 'main',
+      text: 'Blog',
+      url: '/blog',
+    },
+    {
       type: 'icon',
       label: 'LinkedIn',
       icon: (
@@ -76,7 +81,7 @@ export const baseOptions: BaseLayoutProps = {
         </svg>
       ),
       text: 'Twitter',
-      url: 'https://twitter.com/frontendhire',
+      url: 'https://x.com/thisisyhr',
     },
     {
       type: 'icon',
