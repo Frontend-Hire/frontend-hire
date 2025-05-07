@@ -1,0 +1,11 @@
+{
+  "title": "Dynamic Pricing Page",
+  "description": "Learn to build a dynamic pricing page customized based on the user's location.",
+  "pages": [
+    "overview",
+    "setup-pages-router",
+    "rendering-strategies-pages-router",
+    "rendering-strategies-app-router",
+    "summary"
+  ]
+}

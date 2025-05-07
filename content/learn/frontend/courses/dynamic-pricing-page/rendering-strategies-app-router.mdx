@@ -1,0 +1,304 @@
+---
+title: Rendering Strategies (App Router)
+description: In this chapter, we will repeat the steps and see how `App Router` differs from `Pages Router`.
+---
+
+## Pricing Page
+
+Can we reuse the `PricingSection` component in both `App Router` and `Pages Router`?
+
+Let us check. Inside the `app` folder, create a directory called `app-router` to store all the rendering strategies. Within this folder, create another folder `ssr` with a file called `page.tsx`. This is how the routing works in `App Router`. `page.tsx` file is the page that will be rendered while the folder name is the route.
+
+```tsx title="src/app/app-router/ssr/page.tsx"
+import PricingSection from '@/components/PricingSection';
+
+export default function AppRouterSSR() {
+  const prices = ['$99', '$999'];
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">AppRouterSSR</p>
+      <PricingSection prices={prices} />
+    </div>
+  );
+}
+```
+
+Run the dev server and navigate to the `/app-router/ssr` route. You should see the pricing page which means the `PricingSection` component works.
+
+<Callout>
+If you compare the rendering section in the Next.js docs for the [`App Router`](https://nextjs.org/docs/app/building-your-application/rendering) and [`Pages Router`](https://nextjs.org/docs/pages/building-your-application/rendering) the concepts of SSR, SSG, and CSR are not used in the `App Router`. This is crucial though the same concepts are referenced with different terminologies.
+
+The reason for not using the same terminology is because of the React Server Components and they stick to just the terms **"server"** and **"client"**. We will though in this chapter try to still use the same terminology.
+
+</Callout>
+
+## Server Side Rendering (SSR)
+
+But it is static, so how do we get that `getServerSideProps` to work in `App Router`? It is as simple as creating an async function and calling it right in the component.
+
+```tsx title="src/app/app-router/ssr/page.tsx"
+import { headers } from 'next/headers'; // [!code ++]
+import PricingSection from '@/components/PricingSection';
+
+// [!code ++:15]
+const getPrices = async () => {
+  const IP = headers().get('x-forwarded-for') || 'unknown';
+  const req = await fetch(`https://api.country.is/${IP}`);
+  const data = await req.json();
+
+  const PRICES: Record<string, string[]> = {
+    IN: ['₹8,000', '₹80,000'],
+    DEFAULT: ['$99', '$999'],
+  };
+
+  const country = (data.country as string) || 'DEFAULT';
+  const prices = PRICES[country.toUpperCase()];
+
+  return prices;
+};
+
+// [!code highlight]
+export default async function AppRouterSSR() {
+  const prices = await getPrices(); // [!code ++]
+
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">AppRouterSSR</p>
+      <PricingSection prices={prices} />
+    </div>
+  );
+}
+```
+
+This time we access the `IP Address` from the [`headers`](https://nextjs.org/docs/app/api-reference/functions/headers) object provided by `next/headers`.
+
+`App Router` supports [React Server Components (RSC)](https://react.dev/reference/rsc/server-components) by default. This means our component can be asynchronous. This entire component is built on the server and sent to the client. Simpler, right?
+
+Run the build command:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (app)                               Size     First Load JS
+┌ ○ /                                     140 B          87.2 kB
+├ ○ /_not-found                           871 B          87.9 kB
+└ ƒ /app-router/ssr                       140 B          87.2 kB
++ First Load JS shared by all             87 kB
+  ├ chunks/23-ef3c75ca91144cad.js         31.5 kB
+  ├ chunks/fd9d1056-2821b0f0cabcd8bd.js   53.6 kB
+  └ other shared chunks (total)           1.89 kB
+
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+ƒ Middleware                              27.1 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+With the build server (npm start) and `ngrok` server (ngrok http http://localhost:3000) running, navigate to the `/app-router/ssr` route on whatever free URL you get from `ngrok` and you should see the relevant pricing page.
+
+Alright, SSR was easy. What about SSG?
+
+## Static Side Generation (SSG)
+
+The logic from `Pages Router` remains the same. We have to generate the static pages and use our middleware to redirect to the right path.
+
+Create a dynamic page inside `app-router` folder with the route being `[country]`:
+
+```tsx title="src/app/app-router/[country]/page.tsx"
+import PricingSection from '@/components/PricingSection';
+
+const PRICES: Record<string, string[]> = {
+  IN: ['₹8,000', '₹80,000'],
+  DEFAULT: ['$99', '$999'],
+};
+
+export const generateStaticParams = async () => {
+  const paths = Object.keys(PRICES).map((country) => ({
+    country: country.toLowerCase(),
+  }));
+
+  return paths;
+};
+
+export default function AppRouterSSG({
+  params,
+}: {
+  params: { country: string };
+}) {
+  const prices = PRICES[params.country.toUpperCase()];
+
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">AppRouterSSG</p>
+      <PricingSection prices={prices} />
+    </div>
+  );
+}
+```
+
+The `getStaticPaths` function has been replaced by `generateStaticParams`. While the need for `getStaticProps` has been removed. The generateStaticParams has to return all the possible paths that should be generated at build time for the matching route.
+
+Back in the middleware, we can update to also handle the `App Router`.
+
+```tsx title='src/middleware.ts'
+import { NextResponse, NextRequest } from 'next/server';
+
+export async function middleware(request: NextRequest) {
+  // [!code highlight:4]
+  if (
+    request.nextUrl.pathname === '/pages-router' ||
+    request.nextUrl.pathname === '/app-router'
+  ) {
+    const IP = request.headers.get('x-forwarded-for') || 'unknown';
+    const req = await fetch(`https://api.country.is/${IP}`);
+    const data = await req.json();
+
+    const country = (data.country as string) || 'DEFAULT';
+
+    return NextResponse.redirect(
+      // [!code highlight:4]
+      new URL(
+        `${request.nextUrl.pathname}/${country.toLowerCase()}`,
+        request.url,
+      ),
+    );
+  }
+
+  return NextResponse.next();
+}
+```
+
+Run the build command:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (app)                               Size     First Load JS
+┌ ○ /                                     144 B          87.2 kB
+├ ○ /_not-found                           871 B          87.9 kB
+├ ● /app-router/[country]                 144 B          87.2 kB
+├   ├ /app-router/in
+├   └ /app-router/default
+└ ƒ /app-router/ssr                       144 B          87.2 kB
++ First Load JS shared by all             87 kB
+  ├ chunks/23-ef3c75ca91144cad.js         31.5 kB
+  ├ chunks/fd9d1056-2821b0f0cabcd8bd.js   53.6 kB
+  └ other shared chunks (total)           1.89 kB
+
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+ƒ Middleware                              27.2 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+With the build server (npm start) and `ngrok` server (ngrok http http://localhost:3000) running, navigate to the `/app-router` route on whatever free URL you get from `ngrok` and you should be redirected to the country-specific page.
+
+Not much difference compared to the `Pages Router`. What about `CSR`?
+
+## Client Side Rendering (CSR)
+
+There is almost no difference in the `Client Side Rendering (CSR)` approach. We just have to add a `'use client'` directive at the top of the page and the rest of the logic remains identical.
+
+Create a static page inside `app-router` folder with the route being `csr` and add the following code:
+
+```tsx title="src/app/app-router/csr/page.tsx"
+'use client';
+
+import useSWR from 'swr';
+import PricingSection from '@/components/PricingSection';
+
+const PRICES: Record<string, string[]> = {
+  IN: ['₹8,000', '₹80,000'],
+  DEFAULT: ['$99', '$999'],
+};
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const getPrices = async () => {
+  return fetcher('https://api.country.is/').then((data) => {
+    const country = (data.country as string) || 'DEFAULT';
+    const prices = PRICES[country.toUpperCase()];
+    return prices;
+  });
+};
+
+const usePrices = () => {
+  return useSWR('prices', getPrices, {
+    fallbackData: PRICES['DEFAULT'],
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
+};
+
+export default function AppRouterCSR() {
+  const { data } = usePrices();
+
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">AppRouterCSR</p>
+      <PricingSection prices={data} />
+    </div>
+  );
+}
+```
+
+Run the build command:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (app)                               Size     First Load JS
+┌ ○ /                                     144 B          87.2 kB
+├ ○ /_not-found                           871 B          87.9 kB
+├ ● /app-router/[country]                 144 B          87.2 kB
+├   ├ /app-router/in
+├   └ /app-router/default
+├ ○ /app-router/csr                       5.49 kB        92.5 kB
+└ ƒ /app-router/ssr                       144 B          87.2 kB
++ First Load JS shared by all             87 kB
+  ├ chunks/23-763b8b58dfda55fc.js         31.5 kB
+  ├ chunks/fd9d1056-b534f136908d2bca.js   53.6 kB
+  └ other shared chunks (total)           1.89 kB
+
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+ƒ Middleware                              27.2 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+With the build server (npm start) and `ngrok` server (ngrok http http://localhost:3000) running, navigate to the `/app-router/csr` route on whatever free URL you get from `ngrok` and you should see the relevant pricing.
+
+## Summary
+
+In this chapter, we have discussed the differences between `Pages Router` and `App Router`.
+
+Of course, there is more to `App Router` than just this one-to-one comparison with `Pages Router`. `App Router` allows for greater composition of components and rendering strategies which we will cover to a greater extent in a different course.
+
+At this point, our code should match the code in the branch [`3-rendering-app`](https://github.com/Frontend-Hire/dynamic-pricing-page-next/tree/3-rendering-app).

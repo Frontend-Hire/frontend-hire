@@ -1,0 +1,47 @@
+---
+title: Overview
+description: In this course, you will learn how to build a dynamic pricing page.
+---
+
+<Callout type="info">
+  We recommend reading the ["Design A Dynamic Pricing
+  Page"](/learn/frontend/system-design/dynamic-pricing-page/overview) system
+  design first.
+</Callout>
+
+We will cover the following topics:
+
+- Rendering Strategies with Next.js Pages Router
+- Rendering Strategies with Next.js App Router
+
+Though we are building a pricing page, the concept of rendering strategies is more important to understand here and the skills are transferrable to many other projects.
+
+Stuff you will work with this course:
+
+- Next.js
+- TypeScript
+- [SWR](https://swr.vercel.app/)
+
+## Setting Up a Next.js Project
+
+To keep the course focused on the main topic, we will use an already set up Next.js project. You can clone the project from [the GitHub repository](https://github.com/Frontend-Hire/dynamic-pricing-page-next) and follow along with the course.
+
+This initial code was generated through the Next.js CLI. We just cleaned up the project structure and added Prettier, Husky, Lint-Staged, and the Tailwind CSS class sorter plugin. [Clone the repository](https://github.com/Frontend-Hire/dynamic-pricing-page-next) and install the dependencies:
+
+**Note**: Just make sure that you start on the branch `0-init`, though it is the default branch.
+
+```sh
+git clone https://github.com/Frontend-Hire/dynamic-pricing-page-next.git
+cd dynamic-pricing-page-next
+npm install
+npm run dev
+```
+
+<Callout>
+If you would like to also set up the project from scratch, you can follow the steps in the [official Next.js documentation](https://nextjs.org/docs/getting-started/installation). Then follow this chapter from our other course, [Setting up a React Project](/courses/todo-app-react/project-setup#prettier-the-opinionated-code-formatter) to set up the other tools.
+
+Feel free to ping us on [Discord](https://discord.gg/DWAVqksVtx) if you have any questions.
+
+</Callout>
+
+This starter comes with the `App Router` setup but we would also be using the `Pages Router`. In the next section, we will set up the `Pages Router`.

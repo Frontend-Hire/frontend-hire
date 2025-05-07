@@ -1,6 +1,6 @@
 {
   "title": "Todo App with Svelte, TypeScript, and TDD",
-  "description": "Todo apps are a great way to learn a new language or framework. We teach this course with more than React.",
+  "description": "Todo apps are a great way to learn a new language or framework. We teach this course with more than Svelte.",
   "pages": [
     "overview",
     "project-setup",

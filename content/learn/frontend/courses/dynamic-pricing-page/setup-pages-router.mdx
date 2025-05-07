@@ -1,0 +1,89 @@
+---
+title: Setup Pages Router
+description: We will set up the `Pages Router` in this section.
+---
+
+Though the Next.js team is pushing developers to use `App Router`, the majority of the projects out there still use `Pages Router` and the Next.js team says they will support it for a [few years at least](https://github.com/vercel/next.js/discussions/56655).
+
+So, we figured this course could teach you the rendering strategies of both the routers with this project.
+
+<Callout type="warn">
+  A little callout if you are new to Next.js: The docs will have a dropdown at
+  the top of the [left
+  sidebar](https://nextjs.org/docs#app-router-vs-pages-router) that will let you
+  switch between the two routers. The default is `App Router`. So, be mindful of
+  which router docs you are checking.
+</Callout>
+
+The [starter project](https://github.com/Frontend-Hire/dynamic-pricing-page-next) that you cloned does not come with the `Pages Router` setup. We will set that up now.
+
+We do not have to install any additional dependencies. Next.js supports `Pages Router` by default. We just need to create two [special files](https://nextjs.org/docs/getting-started/project-structure#special-files) for the best support.
+
+## Pages Router
+
+Since `Pages Router` is supported by default we can see it in action by simply creating a `pages` folder. We will store all the rendering strategies inside another folder `pages-router` inside of the `pages` folder. The reason is that the `App Router` takes priority over the `Pages Router` if both are set up.
+
+Let us create a file called `ssr.tsx` inside of the `pages-router` folder with the following content:
+
+```tsx title="src/pages/pages-router/ssr.tsx"
+export default function PagesRouterSSR() {
+  return <div>PagesRouterSSR</div>;
+}
+```
+
+Now, run the dev server and go to the route [http://localhost:3000/pages-router/ssr](http://localhost:3000/pages-router/ssr). You should immediately see the `PagesRouterSSR` text but something is amiss here. [TailwindCSS Preflight](https://tailwindcss.com/docs/preflight) styles are not being applied.
+
+This is expected. If you look at the project structure you will notice that the stylesheet `globals.css` is inside the `app` (App Router) folder. Your [index page](http://localhost:3000/) would have the TailwindCSS Preflight styles applied. So, we need a similar setup for the `Pages Router`.
+
+First, let us move this stylesheet outside of the `app` folder just one level up and store it in a folder called `styles`. This will allow us (not a restriction but a readability and maintainability thing) to refer to the same stylesheet in both the `App Router` and the `Pages Router`.
+
+```css title="src/styles/globals.css"
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+Let us update the path to the stylesheet in the `App Router` layout file before moving on to the `Pages Router` stuff.
+
+```tsx title="src/app/layout.tsx"
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '@/styles/globals.css'; // [!code ++]
+
+// Ommited for brevity
+```
+
+Coming back to the `Pages Router` stuff. Let us create a file called `_app.tsx` inside of the `pages` folder with the following content which includes the stylesheet import:
+
+```tsx title="src/pages/_app.tsx"
+import '@/styles/globals.css';
+import type { AppProps } from 'next/app';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
+```
+
+Also, create a file called `_document.tsx` inside of the `pages` folder with the following content:
+
+```tsx title="src/pages/_document.tsx"
+import { Html, Head, Main, NextScript } from 'next/document';
+
+export default function Document() {
+  return (
+    <Html>
+      <Head />
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  );
+}
+```
+
+Now, go back to the route [http://localhost:3000/pages-router/ssr](http://localhost:3000/pages-router/ssr) and check it out. You should see the "**PagesRouterSSR**" text but with the TailwindCSS Preflight styles applied.
+
+Perfect! We can now focus on building the pricing page with the `Pages Router` in different rendering strategies.
+
+At this point, our code should match the code in the branch [`1-setup-pages-router`](https://github.com/Frontend-Hire/dynamic-pricing-page-next/tree/1-setup-pages-router).

@@ -1,0 +1,542 @@
+---
+title: Rendering Strategies (Pages Router)
+description: In this chapter, we will build a simple pricing page and use different rendering strategies to render the same page.
+---
+
+## Pricing Page
+
+Let us create a simple pricing section with two pricing plans: **"Monthly"** and **"Yearly"**.
+
+The code for this is not super important, so feel free to copy and paste the content for `PricingCard` and `PricingSection` components from the below code snippets. We are storing these in the `components` folder.
+
+```tsx title="src/components/PricingCard.tsx"
+type PricingCardProps = {
+  plan: string;
+  price: string;
+  features: string[];
+};
+
+export default function PricingCard({
+  plan,
+  price,
+  features,
+}: PricingCardProps) {
+  return (
+    <div className="space-y-4 rounded bg-slate-300 p-4">
+      <div className="space-y-1 text-center">
+        <p className="text-xl font-medium">{plan}</p>
+        <p className="text-4xl font-bold">{price}</p>
+      </div>
+      <ul className="list-disc pl-4">
+        {features.map((feature) => (
+          <li key={feature}>{feature}</li>
+        ))}
+      </ul>
+      <button className="w-full rounded bg-slate-600 py-2 text-white">
+        Get started
+      </button>
+    </div>
+  );
+}
+```
+
+The pricing section.
+
+```tsx title="src/components/PricingSection.tsx"
+import PricingCard from './PricingCard';
+
+export default function PricingSection() {
+  return (
+    <section className="container mx-auto space-y-2">
+      <h1 className="text-center text-4xl font-medium">Pricing</h1>
+      <div className="grid grid-cols-1 gap-10 sm:grid-cols-2">
+        <PricingCard
+          plan="Monthly"
+          price="$99"
+          features={[
+            '10 users included',
+            '2 GB of storage',
+            'Email support',
+            'Help center access',
+          ]}
+        />
+        <PricingCard
+          plan="Annually"
+          price="$999"
+          features={[
+            '20 users included',
+            '5 GB of storage',
+            'Email and Phone support',
+            'Dedicated Help Center',
+          ]}
+        />
+      </div>
+    </section>
+  );
+}
+```
+
+Let us use the `PricingSection` component in our `PagesRouterSSR` page. This page will deal with `Server Side Rendering (SSR)` with some wrapper styles.
+
+```tsx title="src/pages/pages-router/ssr.tsx"
+import PricingSection from '@/components/PricingSection';
+
+export default function PagesRouterSSR() {
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">PagesRouterSSR</p>
+      <PricingSection />
+    </div>
+  );
+}
+```
+
+The pricing is static at the moment. How do we show a dynamic price based on some personalization? For example, based on the user's country?
+
+Let us create the [`getServerSideProps`](https://nextjs.org/docs/pages/api-reference/functions/get-server-side-props) function inside of the `PagesRouterSSR` page and check for the request headers. There would be a lot of headers but the one we are interested in is `x-forwarded-for` which contains the IP address of the user.
+
+```tsx title="src/pages/pages-router/ssr.tsx"
+import { GetServerSideProps } from 'next'; // [!code ++]
+import PricingSection from '@/components/PricingSection';
+
+// [!code ++:4]
+export const getServerSideProps = (async (context) => {
+  console.log(context.req.headers['x-forwarded-for'] || 'unknown');
+  return { props: {} };
+}) satisfies GetServerSideProps;
+
+export default function PagesRouterSSR() {
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">PagesRouterSSR</p>
+      <PricingSection />
+    </div>
+  );
+}
+```
+
+Refresh the page and you see a weird message in the console. Technically, we won't be able to get our current IP address because we are running a development server. So, how do we expose our dev server to the internet and get a real IP address? Some services and tools help us do that. For this course, we will use [ngrok](https://ngrok.com/docs/what-is-ngrok/)
+
+## ngrok
+
+<Callout>
+  In our opinion, deploying the application to a hosting platform like
+  [Vercel](https://vercel.com/), [Netlify](https://www.netlify.com/), etc., will
+  also yield a similar result but tools like [ngrok](https://ngrok.com/) provide
+  a much faster experience and simplify development.
+</Callout>
+
+The setup for [ngrok](https://ngrok.com/docs/getting-started/) is quite simple. Just follow the instructions in their [getting started guide](https://ngrok.com/docs/getting-started/).
+
+Once the setup is done, with your current dev server running open another terminal and run the following command:
+
+```sh
+ngrok http http://localhost:3000
+```
+
+Then navigate to the `/pages-router/ssr` router on whatever free URL you get from `ngrok` and you should see a real IP address in the terminal (in the terminal where your dev server is running).
+
+Do note, that the `ngrok` free URL changes every time you run `nrok` server. So, be mindful of the URL you are using.
+
+Alright, now that we have access to the real IP address, let us use that to get the geographic location of the user.
+
+## Geolocation
+
+We will use a [free service](https://github.com/hakanensari/country) to get the country of the user. There are various services free and paid that provide this geolocation information. But [Country.is](https://country.is/) is good enough for our use case.
+
+Back in our `PagesRouterSSR` page, let us update the code to use `Country.is` endpoint:
+
+```tsx title="src/pages/pages-router/ssr.tsx"
+import { GetServerSideProps } from 'next';
+import PricingSection from '@/components/PricingSection';
+
+// [!code highlight:16]
+export const getServerSideProps = (async (context) => {
+  const IP = context.req.headers['x-forwarded-for'] || 'unknown';
+  const req = await fetch(`https://api.country.is/${IP}`);
+  const data = await req.json();
+
+  const PRICES: Record<string, string[]> = {
+    IN: ['₹8,000', '₹80,000'],
+    DEFAULT: ['$99', '$999'],
+  };
+
+  return {
+    props: {
+      prices: PRICES[data.country] || PRICES['DEFAULT'],
+    },
+  };
+}) satisfies GetServerSideProps;
+
+export default function PagesRouterSSR() {
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">PagesRouterSSR</p>
+      <PricingSection />
+    </div>
+  );
+}
+```
+
+You can update the `PRICES` object to suit your needs. Since we are based out of India, we will assume that the country is India (country code `IN`).
+
+Let us also display these regional prices in the `PricingSection` component.
+
+```tsx title="src/components/PricingSection.tsx"
+import PricingCard from './PricingCard';
+
+// [!code ++:3]
+type PricingSectionProps = {
+  prices: string[];
+};
+
+// [!code highlight]
+export default function PricingSection({ prices }: PricingSectionProps) {
+  return (
+    <section className="container mx-auto space-y-2">
+      <h1 className="text-center text-4xl font-medium">Pricing</h1>
+      <div className="grid grid-cols-1 gap-10 sm:grid-cols-2">
+        <PricingCard
+          plan="Monthly"
+          price={prices[0]} // [!code highlight]
+          features={[
+            '10 users included',
+            '2 GB of storage',
+            'Email support',
+            'Help center access',
+          ]}
+        />
+        <PricingCard
+          plan="Annually"
+          price={prices[1]} // [!code highlight]
+          features={[
+            '20 users included',
+            '5 GB of storage',
+            'Email and Phone support',
+            'Dedicated Help Center',
+          ]}
+        />
+      </div>
+    </section>
+  );
+}
+```
+
+And pass the prices to the `PricingSection` component.
+
+```tsx title="src/pages/pages-router/ssr.tsx"
+// Ommited for brevity
+
+// [!code highlight]
+export default function PagesRouterSSR({ prices }: { prices: string[] }) {
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">PagesRouterSSR</p>
+      // [!code highlight]
+      <PricingSection prices={prices} />
+    </div>
+  );
+}
+```
+
+Check the `nrgrok` URL and you should see pricing customized to the country of the user.
+
+## Server Side Rendering (SSR)
+
+So far we have still been working with a development server. Let us run the build command and host that build server on `ngrok`.
+
+Run the build command:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (pages)                             Size     First Load JS
+┌   /_app                                 0 B            79.2 kB
+└ ƒ /pages-router/ssr                     704 B          79.9 kB
++ First Load JS shared by all             81.1 kB
+  ├ chunks/framework-4be839806aa8e2d3.js  45.2 kB
+  ├ chunks/main-66783b0b0ef1a702.js       32.1 kB
+  └ other shared chunks (total)           3.85 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+The Next.js build output would indicate the pages that are server-rendered on demand.
+
+What does this mean? The page `pages-router/ssr` will be created on each request. This means that for every user who visits this page, a new page will be created based on the IP address. This is crucial because if this page was static, the pricing would be static too.
+
+<Callout>
+  We recommend reading the ["Design A Dynamic Pricing
+  Page"](/learn/frontend/system-design/dynamic-pricing-page/overview) system
+  design for a better understanding of these rendering strategies and how they
+  would impact the user experience.
+</Callout>
+
+### Previewing the Build Server
+
+Let us use `ngrok` to preview the build server. First, run the following command:
+
+```sh
+npm start
+```
+
+Then run the `ngrok` command:
+
+```sh
+ngrok http http://localhost:3000
+```
+
+Check the `ngrok` URL and you should see pricing customized to the country of the user. This time you are viewing the actual build server instead of the development server. Network requests would be the same as if you were running a production server.
+
+## Static Site Generation (SSG)
+
+But can we get the same result with `Static Site Generation (SSG)`? Technically yes! But the way, we do it is drastically different and would involve domain-level restructuring.
+
+We would have to create a pricing page or landing page for each of the countries we want to support. This way we can have static pages that are customized to the country of the user. This is a pretty common practice and [Netflix, for example, does it](/system-design/dynamic-pricing-page/geo-redirection).
+
+Let us see how we can achieve that. Create a dynamic page called `[country].tsx` inside `pages/pages-router` and add the following code:
+
+```tsx title="src/pages/pages-router/[country].tsx"
+import PricingSection from '@/components/PricingSection';
+import { GetStaticPaths, GetStaticProps } from 'next';
+
+const PRICES: Record<string, string[]> = {
+  IN: ['₹8,000', '₹80,000'],
+  DEFAULT: ['$99', '$999'],
+};
+
+export const getStaticPaths = (async () => {
+  const paths = Object.keys(PRICES).map((country) => ({
+    params: { country: country.toLowerCase() },
+  }));
+
+  return { paths, fallback: false };
+}) satisfies GetStaticPaths;
+
+export const getStaticProps = (async (context) => {
+  const { params } = context;
+  const country = (params?.country as string) || 'DEFAULT';
+
+  const prices = PRICES[country.toUpperCase()];
+
+  return { props: { prices } };
+}) satisfies GetStaticProps;
+
+export default function PagesRouterSSG({ prices }: { prices: string[] }) {
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">PagesRouterSSG</p>
+      <PricingSection prices={prices} />
+    </div>
+  );
+}
+```
+
+Most of the logic remains the same except now we generate a new page at build time based on the countries we support. [`getStaticPaths`](https://nextjs.org/docs/pages/building-your-application/data-fetching/get-static-paths) helps us identify all the paths that should be generated at build time. [`getStaticProps`](https://nextjs.org/docs/pages/building-your-application/data-fetching/get-static-props) helps us pass the data required for those pages.
+
+Run the build command again:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (pages)                             Size     First Load JS
+┌   /_app                                 0 B            79.2 kB
+├ ● /pages-router/[country]               730 B          79.9 kB
+├   ├ /pages-router/in
+├   └ /pages-router/default
+└ ƒ /pages-router/ssr                     725 B          79.9 kB
++ First Load JS shared by all             81.1 kB
+  ├ chunks/framework-4be839806aa8e2d3.js  45.2 kB
+  ├ chunks/main-66783b0b0ef1a702.js       32.1 kB
+  └ other shared chunks (total)           3.85 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+This time you would see the pages that are pre-rendered at build time (SSG or static HTML). The only problem now is that you expect that the user will navigate to the exact page based on their country. This is a bit too much to expect from the user.
+
+So, let us automate this process.
+
+### Geo Redirection
+
+So, far the `pages-router` index route does not have a page and will result in a 404. Let us assume that the user would always go to this route instead of the country-specific page. But we'll redirect the user from the index page to the country-specific page based on their country.
+
+This is where we can leverage `middleware` to redirect the user to the country-specific page. Create a `middleware.ts` file inside the `src` directory (at the same level as `pages` and `app` folders) and add the following code:
+
+```ts title="src/middleware.ts"
+import { NextResponse, NextRequest } from 'next/server';
+
+export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === '/pages-router') {
+    const IP = request.headers.get('x-forwarded-for') || 'unknown';
+    const req = await fetch(`https://api.country.is/${IP}`);
+    const data = await req.json();
+
+    const country = (data.country as string) || 'DEFAULT';
+
+    return NextResponse.redirect(
+      new URL(`/pages-router/${country.toLowerCase()}`, request.url),
+    );
+  }
+
+  return NextResponse.next();
+}
+```
+
+Run the build command again:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (pages)                             Size     First Load JS
+┌   /_app                                 0 B            79.2 kB
+├ ● /pages-router/[country]               730 B            80 kB
+├   ├ /pages-router/in
+├   └ /pages-router/default
+└ ƒ /pages-router/ssr                     725 B            80 kB
++ First Load JS shared by all             81.1 kB
+  ├ chunks/framework-4be839806aa8e2d3.js  45.2 kB
+  ├ chunks/main-7dab52c3ece40bef.js       32.1 kB
+  └ other shared chunks (total)           3.85 kB
+
+ƒ Middleware                              27.1 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+With the build server (npm start) and `ngrok` server (ngrok http http://localhost:3000) running, navigate to the `/pages-router` router on whatever free URL you get from `ngrok` and you should be redirected to the country-specific page.
+
+What is happening here? First up, we check if the user is coming from the index route `/pages-router`. If so, we get the IP address of the user and use it to get the country of the user. Then we redirect the user to the country-specific page. All other requests that do not match this pattern will be handled by the `next` middleware (a.k.a continue with the request).
+
+The process seems repetitive. We had to create a page for each country, and then redirect the user to the country-specific page. Whereas with SSR, all of this was handled in a single step. There are advantages and disadvantages to both approaches. Choose the one that works best for your use case.
+
+We still have another rendering strategy called `Client Side Rendering (CSR)` that has its advantages and disadvantages.
+
+## Client Side Rendering (CSR)
+
+This approach might be the simplest to understand and utilizes a client-side network request to render the prices. This approach renders a static page but gets additional data from the server after the page is rendered.
+
+Since we are making a network request, let us use a package called [`SWR`](https://swr.vercel.app/) to handle some of the caching stuff.
+
+```sh
+npm install swr@2.2.5
+```
+
+Create a `pages-router/csr.tsx` file inside the `pages` directory and add the following code:
+
+```tsx title="src/pages/pages-router/csr.tsx"
+import React from 'react';
+import useSWR from 'swr';
+import PricingSection from '@/components/PricingSection';
+
+const PRICES: Record<string, string[]> = {
+  IN: ['₹8,000', '₹80,000'],
+  DEFAULT: ['$99', '$999'],
+};
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const getPrices = async () => {
+  return fetcher('https://api.country.is/').then((data) => {
+    const country = (data.country as string) || 'DEFAULT';
+    const prices = PRICES[country.toUpperCase()];
+    return prices;
+  });
+};
+
+const usePrices = () => {
+  return useSWR('prices', getPrices, {
+    fallbackData: PRICES['DEFAULT'],
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
+};
+
+export default function PagesRouterCSR() {
+  const { data } = usePrices();
+
+  return (
+    <div className="container mx-auto px-5">
+      <p className="text-xl font-bold">PagesRouterCSR</p>
+      <PricingSection prices={data} />
+    </div>
+  );
+}
+```
+
+We first create a simple `fetcher` utility function that will fetch the data from a URL. Another function called `getPrices` will be used to get the prices.
+
+Note that we do not pass the `IP address` explicitly this time. The [Country.is API](https://github.com/hakanensari/country) will handle that for us.
+
+Next up, we create a custom hook called `usePrices` that will fetch the prices from the `Country.is` API. This custom hook calls the `useSWR` hook with a fallbackData and revalidation options (these revalidations options help not call the API on focus or reconnect).
+
+We will use this hook in the `PagesRouterCSR` component which pretty much remains the same.
+
+Run the build command:
+
+```sh
+npm run build
+```
+
+You should see an output like the following:
+
+```ansi
+# SOME OUTPUT OMMITTED FOR BREVITY
+
+Route (pages)                             Size     First Load JS
+┌   /_app                                 0 B            79.2 kB
+├ ● /pages-router/[country]               729 B            80 kB
+├   ├ /pages-router/in
+├   └ /pages-router/default
+├ ○ /pages-router/csr                     5.54 kB        84.8 kB
+└ ƒ /pages-router/ssr                     725 B            80 kB
++ First Load JS shared by all             81.1 kB
+  ├ chunks/framework-1834ba0befe905dc.js  45.2 kB
+  ├ chunks/main-ba1e008a7166c2f4.js       32.1 kB
+  └ other shared chunks (total)           3.85 kB
+
+ƒ Middleware                              27.1 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses getStaticProps)
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+With the build server (npm start) and `ngrok` server (ngrok http http://localhost:3000) running, navigate to the `/pages-router/csr` router on whatever free URL you get from `ngrok` and you should see the relevant pricing though there might be a little layout shift.
+
+This approach makes an additional network request to get the pricing though with fallback data a full static page is rendered before the network request potentially updates the pricing.
+
+## Summary
+
+In this chapter, we have learned how to render a dynamic pricing page with different rendering strategies. There are more rendering strategies like [`Incremental Static Regeneration (ISR)`](https://nextjs.org/docs/pages/building-your-application/data-fetching/incremental-static-regeneration) and [`Partial Prerendering (PPR)`](https://nextjs.org/docs/app/api-reference/next-config-js/partial-prerendering).
+
+ISR is just like SSG but helps you update static pages after the initial build and is ideal for something like a blog but for our use case has zero benefits.
+
+PPR is an experimental feature that gives you the benefit of SSR and SSG. This feature is highly promising and greatly increases the user experience and performance. We will cover this feature as a bonus section once it is stable.
+
+That is it for this chapter, in the next chapter we will look at the same rendering strategies but with the `App Router` and how a lot of our code is simplified.
+
+At this point, our code should match the code in the branch [`2-rendering-pages`](https://github.com/Frontend-Hire/dynamic-pricing-page-next/tree/2-rendering-pages).
