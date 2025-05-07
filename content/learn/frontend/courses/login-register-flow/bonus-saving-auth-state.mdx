@@ -1,0 +1,16 @@
+---
+title: 'Bonus: Saving Auth State'
+description: We E2E tested the core flow of login and register. But to test the other protected parts of the application, we need to be authenticated.
+---
+
+So, do we have to login every time we run the test? No, we can save the auth state and use it in the subsequent tests.
+
+This is a challenge for you to implement. Of course, we are available at [the discord server](https://discord.gg/DWAVqksVtx) to help you out.
+
+## Saving Auth State
+
+How does authentication work in any application? When you log in, the server sends a token. You save this token for subsequent requests. This is also how we can save the auth state in our E2E tests.
+
+Playwright has dedicated docs [to handle authentication](https://playwright.dev/docs/auth). You should definitely read it to solve this challenge.
+
+All the best! 🚀

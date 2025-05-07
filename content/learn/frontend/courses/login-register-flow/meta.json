@@ -1,0 +1,16 @@
+{
+  "title": "Login Register Flow",
+  "description": "Learn how to build a login and register flow with E2E tests and Supabase.",
+  "pages": [
+    "overview",
+    "setup-nextjs-project",
+    "setup-supabase-project",
+    "building-landing-page",
+    "building-login-page",
+    "e2e-testing-login",
+    "building-register-page",
+    "e2e-testing-register",
+    "bonus-saving-auth-state",
+    "summary"
+  ]
+}

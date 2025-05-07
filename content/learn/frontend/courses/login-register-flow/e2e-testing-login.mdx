@@ -1,0 +1,304 @@
+---
+title: E2E Testing Login Flow
+description: In this lesson, we will learn how to test the login flow with Playwright.
+---
+
+As you can see, how much logic is involved in the login flow (similarly in flows like register, payments, etc.,). We have to check if the user is already logged in, if not then we have to click on the login button, then we have to enter the email and password, and then click on the login button. These are a lot of steps to test manually. Also, imagine bigger flows of the application, it will be tiring to test them manually with every change in the code.
+
+This is where E2E testing comes into play.
+
+## Playwright
+
+There are a lot of E2E testing tools available in the market like Selenium, Cypress, Puppeteer, etc. But in this course, we will be using [Playwright](https://playwright.dev/).
+
+Let us install Playwright in our project.
+
+```sh
+npm init playwright@latest
+```
+
+Run the install command and select the following to get started:
+
+- Name of your Tests folder: `e2e` (default would be `tests`, we are changing it to `e2e`)
+- Add a GitHub Actions workflow to easily run tests on CI: `false` (default is false)
+- Install Playwright browsers: `true` (default is true)
+
+This will install Playwright in your project, create an `e2e` folder with a sample test, a `tests-example` folder, and a `playwright.config.ts` file.
+
+We can delete the `tests-example` folder as we will not be using it. Also, we can delete the sample test file in the `e2e` folder.
+
+## Login Flow Test
+
+Now, what are we supposed to test in the login flow? The better question is, how does the user login? Let's break it down:
+
+1. The user either goes to the login page directly or clicks on the login button from the home page.
+2. The user enters the email and password.
+3. The user clicks on the login button.
+4. The user should be redirected to the dashboard page.
+
+Also, we have to test the error scenarios like:
+
+- The user uses invalid credentials.
+- The user lands on the dashboard page directly without logging in.
+
+## Tests
+
+Let us write the tests to cover the above scenarios. Create a new file `login.spec.ts` in the `e2e` folder.
+
+```ts title="e2e/login.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Login Flow', () => {});
+```
+
+We would need the `test` and `expect` functions from Playwright to write and assert the tests. We are using the `test.describe` function to group the tests related to the login flow.
+
+### Test 1: User goes to the login page from the home page
+
+```ts title="e2e/login.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Login Flow', () => {
+  // [!code ++:7]
+  test('should be able to go to login page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/login');
+  });
+});
+```
+
+In this test, we:
+
+1. Navigate to the home page.
+
+   - We are using the [`page.goto`](https://playwright.dev/docs/writing-tests#navigation) function to navigate to the home page.
+
+2. Click on the login link.
+
+   - We are using the [`page.getByRole`](https://playwright.dev/docs/locators#locate-by-role) function to get the login link and then click on it.
+
+3. Assert that the URL should be `http://localhost:3000/login`.
+   - We are using the [`expect(page).toHaveURL`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-url) function to assert that the URL should be `http://localhost:3000/login`.
+
+See how the test is `async` and we are using `await` for the Playwright functions. This is because Playwright functions return promises.
+
+> Auto-wait. Playwright waits for elements to be actionable prior to performing actions. It also has a rich set of introspection events. The combination of the two eliminates the need for artificial timeouts - the primary cause of flaky tests.
+
+### How to run the test?
+
+To run the test, run the following command in **a new terminal**:
+
+```sh
+npx playwright test
+```
+
+<Callout>
+  Remember to start the development server before running the tests. If you want
+  to do this automatically, you can configure it in the `playwright.config.ts`
+  file. At the end of the file, you should see a couple of commented lines that
+  you can uncomment to start the server before running the tests.
+</Callout>
+
+This will run the tests in the `e2e` folder as defined in the `playwright.config.ts` file and generate an HTML report at the end.
+
+You can also run the tests more interactively through the UI by using the following command:
+
+```sh
+npx playwright test --ui
+```
+
+This will open a UI where you can run the tests, see the logs, and debug the tests.
+
+#### Should we also test if the user can go to the login page directly?
+
+Maybe we can add that explicit test. But we will anyway cover that in the next test where the user logs in successfully.
+
+### Test 2: User logs in successfully and is redirected to the dashboard page
+
+```ts title="e2e/login.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Login Flow', () => {
+  test('should be able to go to login page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/login');
+  });
+
+  // [!code ++:12]
+  test('should be able to login and redirected to dashboard', async ({
+    page,
+  }) => {
+    await page.goto('http://localhost:3000/login');
+
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password').fill('test@123');
+
+    await page.getByRole('button', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+  });
+});
+```
+
+In this test, we:
+
+1. Navigate to the login page.
+
+   - Here, we are navigating to the login page directly.
+
+2. Fill the email and password.
+
+   - We are using the [`page.getByLabel`](https://playwright.dev/docs/api/class-locator#locator-get-by-label) function to get the email and password fields and then fill them with the test data.
+
+3. Click on the login button.
+
+   - We are using the [`page.getByRole`](https://playwright.dev/docs/api/class-locator#locator-get-by-role) function to get the login button and then click on it.
+
+4. Assert that the URL should be `http://localhost:3000/dashboard`.
+   - We check if the user is redirected to the dashboard page after logging in.
+
+Run the tests again to see if the user can log in successfully and is redirected to the dashboard page.
+
+### Test 3: User logs in with invalid credentials
+
+```ts title="e2e/login.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Login Flow', () => {
+  test('should be able to go to login page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/login');
+  });
+
+  test('should be able to login and redirected to dashboard', async ({
+    page,
+  }) => {
+    await page.goto('http://localhost:3000/login');
+
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password').fill('test@123');
+
+    await page.getByRole('button', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+  });
+
+  // [!code ++:12]
+  test('error message is shown for invalid credentials', async ({ page }) => {
+    await page.goto('http://localhost:3000/login');
+
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password').fill('1234567');
+
+    await page.getByRole('button', { name: 'login' }).click();
+
+    await expect(
+      page.getByText('Invalid login credentials').first(),
+    ).toBeVisible();
+  });
+});
+```
+
+In this test, we:
+
+1. Navigate to the login page.
+
+   - We are navigating to the login page directly.
+
+2. Fill the email and password.
+
+   - We use the same test data for the email but an invalid password.
+
+3. Click on the login button.
+
+4. Assert that the error message should be shown.
+   - We are using the [`page.getByText`](https://playwright.dev/docs/api/class-locator#locator-get-by-text) function to get the error message and then assert that it should be visible.
+   - Our error message is `Invalid login credentials` provided by Supabase when the user logs in with invalid credentials.
+   - We are using the [`first`](https://playwright.dev/docs/api/class-locator#locator-first) function to get the first occurrence of the error message. This is because two error messages on the page repeat, one for the email and one for the password. We are only interested in the first one in this case.
+
+Run the tests again to see if the error message is shown when the user logs in with invalid credentials.
+
+### Test 4: The user if not authenticated, should be redirected to the login page
+
+```ts title="e2e/login.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Login Flow', () => {
+  test('should be able to go to login page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/login');
+  });
+
+  test('should be able to login and redirected to dashboard', async ({
+    page,
+  }) => {
+    await page.goto('http://localhost:3000/login');
+
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password').fill('test@123');
+
+    await page.getByRole('button', { name: 'Login' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+  });
+
+  test('error message is shown for invalid credentials', async ({ page }) => {
+    await page.goto('http://localhost:3000/login');
+
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password').fill('1234567');
+
+    await page.getByRole('button', { name: 'login' }).click();
+
+    await expect(
+      page.getByText('Invalid login credentials').first(),
+    ).toBeVisible();
+  });
+
+  // [!code ++:7]
+  test('should be redirected to login page if not authenticated', async ({
+    page,
+  }) => {
+    await page.goto('http://localhost:3000/dashboard');
+
+    await expect(page).toHaveURL('http://localhost:3000/login');
+  });
+});
+```
+
+In this test, we:
+
+1. Navigate to the dashboard page directly.
+
+   - We are navigating to the dashboard page directly.
+
+2. Assert that the URL should be `http://localhost:3000/login`.
+   - We are asserting that the user should be redirected to the login page if they are not authenticated.
+
+We can, of course, make this test and feature more robust by also redirecting them back to the original page after they log in. But for this course, we are just checking if the user is redirected to the login page.
+
+<Callout type="info">
+  Though we wrote the code for the tests, Playwright has a [nice test
+  generator](https://playwright.dev/docs/codegen-intro) that can generate the
+  code for you. You can use it to generate the code and then modify it as per
+  your requirements. It is quite helpful when you are not sure how to write the
+  code for a particular test.
+</Callout>
+
+---
+
+That is it for this chapter, we will next work on the register page.
+
+At this point, our code should match the code in the branch [`4-e2e-login-flow`](https://github.com/Frontend-Hire/login-register-flow-e2e-supabase/tree/4-e2e-login-flow).

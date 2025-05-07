@@ -1,0 +1,161 @@
+---
+title: Building Register Page
+description: In this lesson, we will build the register page with a form that allows users to enter an email, a password, and a password confirmation.
+---
+
+We will pretty much do the same things we did with the login page, but with a few differences. Expect this lesson to be quick. In case, you need more explanation, you can ask us in [the Discord community](https://discord.gg/DWAVqksVtx).
+
+## Register Page
+
+To save you some time and not repeat the same steps, we will give you the entire code for the register page and the action. You can copy and paste it into your project.
+
+```tsx title="src/app/(auth)/register/page.tsx"
+'use client';
+
+import { useFormState } from 'react-dom';
+import Link from 'next/link';
+import { register } from './_actions/register';
+
+export default function RegisterPage() {
+  const [state, formAction] = useFormState(register, null);
+
+  return (
+    <>
+      <h1 className="mb-4 text-center text-xl">Register</h1>
+      <form action={formAction} className="space-y-6">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="email">Email</label>
+          <input id="email" name="email" type="email" required />
+          <p aria-live="polite">{state?.errors.email}</p>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="password">Password</label>
+          <input id="password" name="password" type="password" required />
+          <p aria-live="polite">{state?.errors.password}</p>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="confirmPassword">Confirm Password</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            required
+          />
+          <p aria-live="polite">{state?.errors.confirmPassword}</p>
+        </div>
+        <button className="w-full bg-black px-3 py-2 text-white">
+          Register
+        </button>
+        <p>
+          {`Already have an account? `}
+          <Link className="underline hover:opacity-60" href="/login">
+            Login from here!
+          </Link>
+        </p>
+      </form>
+    </>
+  );
+}
+```
+
+Here is the server action code:
+
+```ts title="src/app/(auth)/register/_actions/register.ts"
+'use server';
+
+import { createClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
+
+const schema = z
+  .object({
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match!',
+    path: ['confirmPassword'],
+  });
+
+export async function register(currentState: any, formData: FormData) {
+  const data = schema.safeParse({
+    email: formData.get('email'),
+    password: formData.get('password'),
+    confirmPassword: formData.get('confirmPassword'),
+  });
+
+  // Return early if the form data is invalid
+  if (!data.success) {
+    return {
+      errors: data.error.flatten().fieldErrors,
+    };
+  }
+
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.signUp({
+    email: data.data.email,
+    password: data.data.password,
+  });
+
+  if (error) {
+    return {
+      errors: {
+        email: error.message,
+        password: error.message,
+        confirmPassword: error.message,
+      },
+    };
+  }
+
+  redirect('/dashboard');
+}
+```
+
+You will see two differences in the register action compared to the login action:
+
+1. We use [`refine`](https://zod.dev/?id=refine) to check if the password and the confirm password match, the [`path`](https://zod.dev/?id=customize-error-path) property is used to customize the error path a.k.a which field the error should be shown on.
+2. We use `supabase.auth.signUp` instead of `supabase.auth.signIn`.
+
+Everything else is the same.
+
+## Link the home page to the register page
+
+All that is left is to link the home page to the register page. We can do this by adding a link to the register page on the marketing landing page's header.
+
+```tsx title="src/app/(marketing)/_components/header.tsx"
+import Link from 'next/link';
+
+export default function Header() {
+  return (
+    <header className="bg-gray-300">
+      <div className="container flex justify-between py-4">
+        <span>Logo</span>
+        <nav>
+          <ul className="flex gap-4">
+            <li>
+              <Link href="/about-us">About Us</Link>
+            </li>
+            <li>
+              <Link href="/login">Login</Link>
+            </li>
+            // [!code ++:3]
+            <li>
+              <Link href="/register">Register</Link>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+  );
+}
+```
+
+You can try to register a user now.
+
+---
+
+That is it for this chapter, we are ready to now test this whole flow in the next section.
+
+At this point, our code should match the code in the branch [`5-building-register-page`](https://github.com/Frontend-Hire/login-register-flow-e2e-supabase/tree/5-building-register-page).

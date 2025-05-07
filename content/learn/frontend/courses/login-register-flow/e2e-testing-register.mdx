@@ -1,0 +1,161 @@
+---
+title: E2E Testing Register Flow
+description: In this lesson, we will learn how to test the register flow with Playwright.
+---
+
+We will write similar E2E tests for the register flow as we did for the login flow. Let us not worry about the basic tests that mirror the login flow tests. We will focus on the tests that are specific to the register flow.
+
+So, just copy the below code and paste it into the `register.spec.ts` file inside the `e2e` folder.
+
+```ts title="e2e/register.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Register Flow', () => {
+  test('should be able to go to register page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Register' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/register');
+  });
+});
+```
+
+## How to test the register flow?
+
+Let us first see how the flow works:
+
+1. Go to the home page.
+2. Click on the `Register` link.
+3. Fill in the form with the required details.
+4. Click on the `Register` button.
+5. You will be redirected to the dashboard page.
+
+The issue might not be evident in the above flow. But, if you try to register with an already registered email, you will see an error message. So, we would need a way to register with a unique email every time we run the test.
+
+This is one of the known issues with E2E testing. Determinism is hard to achieve in E2E tests with such scenarios. By determinism, we mean that the test and the flow should be predictable and consistent every time we run the test.
+
+<Callout>
+  We greatly recommend you read [Determinism: E2E Test Defects
+  Determinism!](https://noriste.github.io/reactjsday-2019-testing-course/book/e2e-test-defects-determinism.html),
+  this is [part of a React
+  course](https://noriste.github.io/reactjsday-2019-testing-course/) from
+  [Stefano Magni](https://www.linkedin.com/in/noriste/) and [Jaga
+  Santagostino](https://www.linkedin.com/in/jagasantagostino/). It also, helped
+  us better understand the issues with E2E testing. Though their course uses
+  Cypress, the concepts are the same.
+</Callout>
+
+So, what are our options to achieve determinism in this scenario?
+
+1. **Delete the user after the test**: In our case, we can do this easily as we have access to the database which is also fast (locally). But, this is not always possible.
+
+2. **Use a unique email every time**: In our case, we can also do this easily. We can use a random email every time we run the test. This is a good option if you do not have access to the database or if deleting the user is not an option.
+
+Again, we use a local Supabase database, so both the above options are feasible for us. We will go with the second option as it is more generic and can be used in most scenarios. In a real-world scenario, you might have to evaluate more options to achieve determinism.
+
+<Callout>
+  In our case, we use email and password for registration. But, your application
+  could be using just third-party authentication like Google, Facebook, etc. In
+  such cases, you might not have control over the email. In such cases, you
+  might have to use a different approach to achieve determinism. One solution
+  could be to create dummy accounts in the third-party service and use them for
+  testing. That means you will have to manage these dummy accounts and delete
+  them after the test.
+</Callout>
+
+Let us see how we can use a random email every time we run the test.
+
+```ts title="e2e/register.spec.ts" {12-28}
+import { test, expect } from '@playwright/test';
+
+test.describe('Register Flow', () => {
+  test('should be able to go to register page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Register' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/register');
+  });
+
+  // [!code ++:17]
+  test('new user can register', async ({ page }) => {
+    await page.goto('http://localhost:3000/register');
+
+    const random = Math.floor(Math.random() * 100000);
+
+    await page.getByLabel('Email').fill(`test${random}@test.com`);
+    await page
+      .getByLabel('Password', {
+        exact: true,
+      })
+      .fill(`123456`);
+    await page.getByLabel('Confirm Password').fill(`123456`);
+
+    await page.getByRole('button', { name: 'Register' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+  });
+});
+```
+
+In the above code, we generate a random number and append it to the email every time we run the test. This way, we ensure that the email is unique every time we run the test. Of course, this is not a foolproof method, but it works for our case, and also we have control over the database.
+
+Note how we now use `exact: true` for the `Password` label. This is because the `Password` label is a substring of the `Confirm Password` label. So, we need to be more specific in this case.
+
+Run the tests and they should pass. Let us also test the case where we try to register with an already registered email.
+
+```ts title="e2e/register.spec.ts"
+import { test, expect } from '@playwright/test';
+
+test.describe('Register Flow', () => {
+  test('should be able to go to register page', async ({ page }) => {
+    await page.goto('http://localhost:3000');
+
+    await page.getByRole('link', { name: 'Register' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/register');
+  });
+
+  test('new user can register', async ({ page }) => {
+    await page.goto('http://localhost:3000/register');
+
+    const random = Math.floor(Math.random() * 100000);
+
+    await page.getByLabel('Email').fill(`test${random}@test.com`);
+    await page
+      .getByLabel('Password', {
+        exact: true,
+      })
+      .fill(`123456`);
+    await page.getByLabel('Confirm Password').fill(`123456`);
+
+    await page.getByRole('button', { name: 'Register' }).click();
+
+    await expect(page).toHaveURL('http://localhost:3000/dashboard');
+  });
+
+  // [!code ++:13]
+  test('existing user can not register', async ({ page }) => {
+    await page.goto('http://localhost:3000/register');
+
+    await page.getByLabel('Email').fill('test@test.com');
+    await page.getByLabel('Password', { exact: true }).fill('123456');
+    await page.getByLabel('Confirm Password').fill('123456');
+
+    await page.getByRole('button', { name: 'Register' }).click();
+
+    await expect(
+      page.getByText('user already registered').first(),
+    ).toBeVisible();
+  });
+});
+```
+
+Run the tests and they should pass. We have now successfully tested the register flow. We have also seen how to handle the issue of determinism in E2E tests.
+
+---
+
+Next, we have a bonus section, where we will discuss how to handle the cases where we test post-authentication flows. This is a common scenario in most applications. So, it is important to know how to handle such cases.
+
+At this point, our code should match the code in the branch [`6-e2e-register-flow`](https://github.com/Frontend-Hire/login-register-flow-e2e-supabase/tree/6-e2e-register-flow).

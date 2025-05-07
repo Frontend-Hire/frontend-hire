@@ -1,0 +1,269 @@
+---
+title: Setup a Supabase Project for Local Development
+description: Learn how to set up a Supabase project for local development.
+---
+
+## What is Supabase?
+
+Supabase is an open-source Firebase alternative. It provides a suite of tools to build a backend for your application. It includes a database, authentication, storage, and real-time subscriptions. It is built on top of Postgres, which is a popular relational database.
+
+This means you get the power of Postgres with the simplicity of Firebase. We would only use the authentication features in this course, but you can explore the other features as well.
+
+## Why Set Up Locally?
+
+Most tutorials out there on Supabase focus on setting up the project on the cloud. This is okay for a tutorial, but in a real-world scenario, you would want to set up the project locally first. This way, you can test the setup, make changes, and debug issues without affecting the production environment.
+
+## Can't I Just Use the Cloud and create another project or account?
+
+Yes, you can. But let us tell you it will be a pain to manage multiple projects and accounts. Handling migrations, managing the database, and debugging issues will be a nightmare. So, it is better to set up the project locally and then link it to the cloud. This is the best practice according to the Supabase docs. Also, their cloud only gives you 2 active projects in the free tier, meaning you'd have already crossed the limit.
+
+You should read more about [the local development flow](https://supabase.com/docs/guides/cli/local-development). We will follow the same steps in this chapter.
+
+## Running Supabase Locally
+
+This is going to be a little overwhelming if you are new to such self-hosted services. Almost all the services out there have a similar setup process that would involve using Docker. Docker is a tool that allows you to run applications in containers. This way, you can run the application without worrying about the dependencies and the environment. It is like a virtual machine but lightweight. We won't go into the details of Docker in this course, but you can read more about it in the [official documentation](https://docs.docker.com/guides/get-started/).
+
+But don't worry, we will guide you through the process to at least setup Supabase to run on your local and are also available on [Discord](https://discord.gg/DWAVqksVtx) to help you out with any weird issues you might encounter.
+
+### Step 1: Install Docker Desktop
+
+- Mac Instructions: [Install Docker Desktop on Mac](https://docs.docker.com/desktop/install/mac-install/)
+- Windows Instructions: [Install Docker Desktop on Windows](https://docs.docker.com/desktop/install/windows-install/)
+- Linux Instructions: [Install Docker Desktop on Linux](https://docs.docker.com/desktop/install/linux-install/)
+
+Once you have installed Docker Desktop, open it and make sure it is running. You should see a whale icon in the system tray. That is it. We do not have to do anything else with Docker directly. The Supabase CLI will take care of everything.
+
+### Step 2: Install Supabase CLI
+
+We will use `npx` to run the Supabase CLI. Run the following command in your terminal at the root of our Next.js project:
+
+```sh
+npx supabase init
+```
+
+It might ask you for a few prompts for VSCode and IntelliJ settings for Deno. We can ignore them (either yes or no will work).
+
+If the command runs successfully, you should see a new folder called `supabase` in your project root. This folder contains the configuration files for Supabase. We do not have to touch them for this course.
+
+<Callout>
+The `config.toml` file inside the `supabase` folder contains the configuration for the Supabase CLI. This helps you configure the Supabase project for auth, database, etc.,
+
+You can read more about the configuration in the [official documentation](https://supabase.com/docs/guides/cli/config).
+
+</Callout>
+
+### Step 3: Start Supabase Locally
+
+Now, that we have the configuration files, we can start the Supabase server locally. Make sure the Docker Desktop is running and then run the following command in your terminal:
+
+```sh
+npx supabase start
+```
+
+If successful, you should see a message saying `Started supabase local development setup.` and a couple of URLs. You can now access the Supabase dashboard at `http://localhost:54323`
+
+## Connect Supabase and Next.js
+
+Now that we have the Supabase server running locally, we will connect it to our Next.js project. Since we use the latest version of Next.js, we can use the App router.
+
+Supabase has great documentation on [how to connect it to Next.js](https://supabase.com/docs/guides/auth/server-side/nextjs?queryGroups=router&router=app). We will follow the same steps here.
+
+### Step 1: Install Supabase Packages
+
+We need to install the Supabase packages to connect to the server. Run the following command in your terminal:
+
+```sh
+npm install @supabase/supabase-js @supabase/ssr
+```
+
+### Step 2: Setup local environment variables
+
+Create a `.env.local` file in the root of your project and add the following environment variables:
+
+```txt title=".env.local"
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+```
+
+The values above are the default values for the local Supabase server. You can find the values in the `supabase/config.toml` file or by running the following command:
+
+```sh
+npx supabase status
+```
+
+### Step 3: Create the Supabase Client
+
+We would only use the Server client in this course. But we will add both the server component client and the browser component client (Supabase docs called the browser client as just the `client`) to the project.
+
+Create a new file called `src/utils/supabase/client.ts` and add the following code for the browser component client:
+
+```ts title="src/utils/supabase/client.ts"
+import { createBrowserClient } from '@supabase/ssr';
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+}
+```
+
+Next, create a new file called `src/utils/supabase/server.ts` and add the following code for the server component client:
+
+```ts title="src/utils/supabase/server.ts"
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+export function createClient() {
+  const cookieStore = cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch (error) {
+            // The `delete` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    },
+  );
+}
+```
+
+<Callout>
+What is the difference between the browser and server component clients?
+
+As the name suggests, the browser component client is used in the browser. It is used to interact with the Supabase server from the client side.
+
+The server component client is used in the server. It is used to interact with the Supabase server from the server side.
+
+</Callout>
+
+<Callout>
+  What is the cookies object? The cookies object is a Next.js API that allows
+  you to interact with cookies. We use it to store the session token in the
+  server component client because the only way to store the session token in the
+  server is by using cookies. The `supabase/ssr` package provides a helper
+  function to interact with cookies.
+</Callout>
+
+### Step 4: Setup the middleware
+
+Create a new file called `src/utils/supabase/middleware.ts` and add the following code:
+
+```ts title="src/utils/supabase/middleware.ts"
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+
+export async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+        },
+      },
+    },
+  );
+
+  await supabase.auth.getUser();
+
+  return response;
+}
+```
+
+Create another file called `middleware.ts` at the root of the project (in our case, inside the `src` folder), this is how Next.js handles middleware. Add the following code to the file:
+
+```ts title="src/middleware.ts"
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/utils/supabase/middleware';
+
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
+```
+
+<Callout>
+Why do we need the middleware?
+
+Server components can't write to cookies directly, [a great explanation is available here](https://youtu.be/ejO8V5vt-7I?feature=shared). So, we need to use a middleware to update the session token in the cookies. This middleware is called on every request and updates the session token in the cookies. This way we make the session token available to the server components as well as the client components.
+
+</Callout>
+
+That is it for this chapter, we are ready to use our Supabase Auth now.
+
+At this point, our code should match the code in the branch [`1-supabase-setup`](https://github.com/Frontend-Hire/login-register-flow-e2e-supabase/tree/1-supabase-setup).

@@ -11,6 +11,7 @@
     "system-design/dynamic-pricing-page",
     "---Courses---",
     "courses/todo-app-react",
-    "courses/stackpack"
+    "courses/stackpack",
+    "courses/login-register-flow"
   ]
 }
