@@ -1,0 +1,145 @@
+---
+title: Project Setup
+description: A setup you won't forget.
+---
+
+## SvelteKit + Vite + TypeScript
+
+The [recommended way](https://svelte.dev/docs/introduction#start-a-new-project) to start a Svelte project is through SvelteKit which internally uses Vite.
+
+Run the following commands in your terminal:
+
+```sh
+npm create svelte@latest todo-app-svelte-tdd-typescript
+```
+
+It will prompt you for the following:
+
+- Which Svelte app template? -> `Skeleton project`
+- Add type checking with TypeScript? -> `Yes, using TypeScript syntax`
+- Select additional options (use arrow keys/space bar) -> **Select the below**
+  - `Add ESLint for code linting`
+  - `Add Prettier for code formatting`
+  - `Add Vitest for unit testing`
+
+Then open the project in VSCode (or your IDE of choice).
+
+Install the dependencies using the following command in your terminal:
+
+```sh
+npm install
+```
+
+## Git
+
+Who doesn't use Git these days? We will use Git to manage our code versioning.
+
+To initialize a Git repository, run the following command in your terminal:
+
+```sh
+git init
+```
+
+## Prettier: The Opinionated Code Formatter
+
+<Callout>
+  Why should we even care about formatting our code? Having a consistent code
+  style across your project is a good practice. It makes it easier for other
+  developers to read and understand your code. It also makes it easier to spot
+  errors and bugs.
+</Callout>
+
+We pretty much follow the same install instructions from the [Prettier Docs](https://prettier.io/docs/en/install).
+
+Prettier is not just used as a VSCode extension but also as a CLI tool to format your code. We will use it to format our code before committing it to Git.
+
+Our SvelteKit scaffold project already set up Prettier.
+
+The scaffold comes with a good set of defaults. But you can change them if needed. We just have to update the `.prettierrc` file:
+
+And add the following to it. Feel free to change the values to your liking (this is what we prefer):
+
+```json title='.prettierrc' {1-8}
+{
+  "tabWidth": 2,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "printWidth": 80,
+  "plugins": ["prettier-plugin-svelte"],
+  "overrides": [{ "files": "*.svelte", "options": { "parser": "svelte" } }]
+}
+```
+
+We also want to **not** format specific files. Again, the SvelteKit scaffolded this file for us. Check the `.prettierignore` file:
+
+We can now format all files in our project by running the following command in our terminal:
+
+```sh
+npx prettier . --write
+```
+
+## Prettier: Editor Integration
+
+We assume that you are using VSCode as your editor. If not, you can still follow along but you will have to figure out how to integrate Prettier with your editor. Guide for other editors can be found [here](https://prettier.io/docs/en/editors).
+
+Install the Prettier extension for VSCode. You can find it [here](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode).
+
+We want to use Prettier as the default formatter and format our code automatically when we save a file. To do this, we need to add the following to our VSCode settings:
+
+```json
+"editor.defaultFormatter": "esbenp.prettier-vscode",
+"editor.formatOnSave": true
+```
+
+You can also do this through the UI. Open the VSCode settings and search for `formatOnSave`. Check the box to enable it. Then, search for `defaultFormatter` and select `esbenp.prettier-vscode`.
+
+## ESLint
+
+ESLint is a tool for finding and fixing bugs in our JavaScript code. It also helps us to enforce code style and formatting conventions. SvelteKit scaffolded this too.
+
+It is setup in such a way that it works with Prettier. We can check that in the `eslint.config.js` file where `eslint-config-prettier` is extended.
+
+## Git Hooks
+
+Git hooks are scripts that run automatically whenever a particular event occurs in a Git repository. We will use it to run Prettier and ESLint before we commit our code.
+
+This will ensure we do not commit code that does not follow our code style and formatting conventions.
+
+Install Husky and lint-staged while also setting the Husky script and a pre-commit hook by running the following commands in your terminal:
+
+```sh
+npm install --save-dev husky lint-staged
+npx husky init
+node --eval "fs.writeFileSync('.husky/pre-commit','npx lint-staged\n')"
+```
+
+Then, update your `package.json` file to include the following:
+
+```json title='package.json'
+"lint-staged": {
+	"**/*.{js,ts,svelte}": [
+		"eslint --fix",
+		"prettier --write --ignore-unknown"
+	],
+	"!**/*.{js,ts,svelte}": ["prettier --write --ignore-unknown"]
+}
+```
+
+## Commit
+
+But before that let's save our work and commit it to Git.
+
+```sh
+git add .
+git commit -m "Initial commit"
+```
+
+And run our app to make sure everything is working as expected.
+
+```sh
+npm run dev
+```
+
+That's it! We are now ready to start coding our Todo App!
+
+At this point, your code should be a good match to the branch of the repository: [1-project-setup](https://github.com/Frontend-Hire/todo-app-svelte-tdd-typescript/tree/1-project-setup)

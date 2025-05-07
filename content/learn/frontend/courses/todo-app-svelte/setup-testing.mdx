@@ -1,0 +1,92 @@
+---
+title: Setup Testing
+description: In this section, we'll set up Vitest and Svelte Testing Library.
+---
+
+Testing is tedious. Testing is boring. Developers avoid it.
+
+Testing is important. Testing is necessary. Developers need to do it.
+
+Manual testing is expensive and time-consuming. Automated testing is cheap and fast.
+
+Also, there are not a lot of testing tutorials out there, as there are tutorials on how to build a web app.
+
+This causes many developers to avoid testing because they lack understanding of the process and the tools. I wouldn't even say I like testing as a frontend developer. But I have a system that works for me, and I want to share it with you.
+
+But first, we need to set up our tools.
+
+## Vitest
+
+Since we are using Vite, we greatly benefit from a native testing solution, Vitest. You can read more about [Why Vitest here](https://vitest.dev/guide/why.html).
+
+Most companies out there use Jest for testing. Luckily, Vitest is compatible with Jest.
+
+Either way, for this course, we will use Vitest. The SvelteKit scaffolded Vitest for us.
+
+Let us test if Vitest is working.
+
+### Run the following command in your terminal:
+
+```sh
+npm run test
+```
+
+The scaffold came with a little test, named `index.test.ts`, this type of test is called a `unit test`. It is a test that tests a small unit of code. In this case, we are testing whether `1 + 2` is `3` or not.
+
+These kinds of tests are fundamental because they test the small units of code that make up your app. Of course, this sample test is useless. We will write good tests in the subsequent chapters.
+
+Also, using a **TDD** (Test Driven Development) approach is more straightforward with unit tests. You can write the unit tests and then the code to pass the tests.
+
+Okay, now that we have Vitest set up. We need one more tool to finish our setup.
+
+## Svelte Testing Library (STL)
+
+<Callout>
+
+We would first highly recommend:
+
+- You read the [guiding principles of the testing library](https://testing-library.com/docs/guiding-principles).
+- You read the blog post on [Testing Implementation Details](https://kentcdodds.com/blog/testing-implementation-details) by Kent C. Dodds.
+
+</Callout>
+
+Svelte Testing Library is a [wrapper around the DOM Testing Library](https://testing-library.com/docs/svelte-testing-library/intro), optimized for Svelte components.
+
+Either way, we need to install STL to test our Svelte components. Run the following command in your terminal:
+
+```sh
+npm install -D @testing-library/svelte
+```
+
+Also, since we use Vitest and not Jest ([read more here](https://testing-library.com/docs/svelte-testing-library/setup#vitest)), we have to install a test environment called `jsdom`. Run the following command in your terminal:
+
+```sh
+npm install -D jsdom
+```
+
+## Configuring Vitest and Svelte Testing Library
+
+Now that we have all the tools installed, we must configure them. This is pretty simple; it is usually only done once and never touched again.
+
+But to figure out the actual configuration can be painful. We'd suggest going through the docs at a time when you are not tired and can focus on the task at hand.
+
+The best part about configuring Vitest is using our existing `vite.config.ts` file. We need to add a few lines of code to it.
+
+```ts title="./vite.config.ts"
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vitest/config';
+import { svelteTesting } from '@testing-library/svelte/vite'; // [!code highlight]
+
+export default defineConfig({
+  plugins: [sveltekit(), svelteTesting()], // [!code highlight]
+  test: {
+    environment: 'jsdom', // [!code highlight]
+  },
+});
+```
+
+We got this configuration from [the docs here](https://testing-library.com/docs/svelte-testing-library/setup#vitest). More configuration and packages might be required, but we will figure that out as needed.
+
+Great, we can now start writing our first actual tests.
+
+At this point, your code should be a good match to the branch of the repository: [4-setup-testing](https://github.com/Frontend-Hire/todo-app-svelte-tdd-typescript/tree/4-setup-testing)

@@ -1,0 +1,373 @@
+---
+title: Writing tests
+description: In this section, we'll write tests to confirm the behavior of the Todo App.
+---
+
+Let us see where we are currently. Run the dev server and open the respective dev URL, as Vite shows in your browser.
+
+```sh
+npm run dev
+```
+
+Also, buckle up. This section is going to be a long ride.
+
+## Render Test
+
+As frontend developers, we find it easier to work with visible things. We already know that the component is visible in the browser.
+
+But why do we even need to test it? Writing tests for this seems futile. Right now, the component is straightforward. But, as the component grows, it will become more complex and we cannot be sure that any new changes will not cause regressions.
+
+So, writing tests to confirm our current behavior is a good idea. Let us write a test to verify that the input and button are rendering in the browser.
+
+### Test Structure
+
+Create a new `page.test.ts` file in the `src/routes` folder. This file will pretty much contain the tests for the entire Page (or component). Also, this file will be [ignored by the SvelteKit router](https://kit.svelte.dev/docs/routing#other-files).
+
+Note: We do not name the file `+page.test.ts` but just `page.test.ts`. This is because files starting with `+` are reserved for the SvelteKit router, despite the files being ignored.
+
+```ts title="src/routes/page.test.ts"
+import { describe, test } from 'vitest';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {});
+});
+```
+
+Every test should have a meaningful name. The test name should describe what the test is doing. In this case, we are testing if the Page component renders the input field and the add button. (read more about [test API here](https://vitest.dev/api/#test))
+
+Describe is used to group tests. It is not necessary to use describe, but it is good practice for grouping tests. It helps organize the tests and debug them. (read more about [describe API here](https://vitest.dev/api/#describe))
+
+### Render Component for Testing
+
+We need to render the component in the test. We can use the `render` function from `@testing-library/svelte` to render the component. (read more about [render API here](https://testing-library.com/docs/svelte-testing-library/api#render))
+
+```ts title="src/routes/page.test.ts"
+import { describe, test } from 'vitest';
+import { render } from '@testing-library/svelte'; // [!code ++]
+
+import Page from './+page.svelte'; // [!code ++]
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page); // [!code ++]
+  });
+});
+```
+
+### Query the DOM
+
+We need to query the DOM to check if the input field and the button are present.
+
+We can use various queries. In general, following the guidelines of Testing Library (read the [priority here](https://testing-library.com/docs/queries/about#priority)) for the query priority order is a good idea.
+
+To summarise at a high level, we need to use the queries closest to the user. In our case:
+
+- We'll use `getByRole` to query the input and the button. This comes from the `screen` of `@testing-library/svelte`.
+
+```ts title="src/routes/page.test.ts"
+import { describe, test } from 'vitest';
+import { render, screen } from '@testing-library/svelte'; // [!code highlight]
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    // [!code ++:2]
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+  });
+});
+```
+
+### Assert
+
+We have the elements. Now, we need to assert that they are present in the DOM. We can use the `expect` function from `vitest` to assert. (read more about [expect API here](https://vitest.dev/api/expect.html#expect))
+
+And also, use the `toBeDefined` matcher to check if the element is defined. (read more about [toBeDefined matcher here](https://vitest.dev/api/expect.html#tobedefined))
+
+```ts title="src/routes/page.test.ts"
+import { describe, test, expect } from 'vitest'; // [!code highlight]
+import { render, screen } from '@testing-library/svelte';
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    // [!code ++:2]
+    expect(input).toBeDefined();
+    expect(button).toBeDefined();
+  });
+});
+```
+
+### Run the Test
+
+Now, run the test and see if it passes.
+
+```sh
+npm test
+```
+
+The test should pass. You can delete the sample test `index.test.ts` as it is not required.
+
+### Improving the Test
+
+Now, `toBeDefined` is not the best matcher to use here. We can use `toBeInTheDocument` matcher from `@testing-library/jest-dom` to check if the element is present in the DOM. (read more about [toBeInTheDocument matcher here](https://testing-library.com/docs/queries/about#priority))
+
+- Read [this StackOverflow answer here](https://stackoverflow.com/questions/73783371/difference-between-tobeinthedocument-and-tobedefined) to understand the difference between `toBeDefined` and `toBeInTheDocument`.
+
+So, let us install `@testing-library/jest-dom` and use the `toBeInTheDocument` matcher.
+
+```sh
+npm install -D @testing-library/jest-dom
+```
+
+We will import the `vitest` compatible version of `@testing-library/jest-dom` from `@testing-library/jest-dom/vitest`. (read more about [vitest compatible version here](https://github.com/testing-library/jest-dom?tab=readme-ov-file#with-vitest))
+
+And it would import the entire thing.
+
+```ts title="src/routes/page.test.ts"
+import { describe, test, expect } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
+import '@testing-library/jest-dom/vitest'; // [!code ++]
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    // [!code highlight:2]
+    expect(input).toBeInTheDocument();
+    expect(button).toBeInTheDocument();
+  });
+});
+```
+
+Rerun the test, and it should pass.
+
+The `jest-dom` import (line 3 in the above snippet) usually happens in a separate setup file for all the tests in our application. We will do that now as a good practice.
+
+Create a new file, `setup-tests.ts`, inside the `src/tests` folder and add the import.
+
+<Callout>
+The docs will suggest putting this file at the root of the project but then TypeScript will complain. Then you might try including that file in the `tsconfig.json` but then all the SvelteKit includes will not work as they don't get merged from the referenced file.
+
+So, the easiest fix is to put this file in an already included folder which is almost anywhere inside the `src` folder.
+
+</Callout>
+
+```ts title="./src/tests/setup-tests.ts"
+import '@testing-library/jest-dom/vitest';
+```
+
+And remove the import from the test file.
+
+```ts title="src/routes/page.test.ts"
+import { describe, test, expect } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    expect(input).toBeInTheDocument();
+    expect(button).toBeInTheDocument();
+  });
+});
+```
+
+We must also update our `vite.config.ts` to use this setup file. (read more about [setup files here](https://vitest.dev/config/#setupfiles))
+
+```ts title="./vite.config.ts"
+import { sveltekit } from '@sveltejs/kit/vite';
+import { defineConfig } from 'vitest/config';
+import { svelteTesting } from '@testing-library/svelte/vite';
+
+export default defineConfig({
+  plugins: [sveltekit(), svelteTesting()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/tests/setup-test.ts'], // [!code ++]
+  },
+});
+```
+
+Rerun the test, and it should pass.
+
+Great, we wrote our first test, which made sense to test. But we are not done yet. We need to test the functionality of the component further.
+
+<Callout type='error'>
+If you also did our React version of this course, you'd notice that we are skipping the `eslint` plugins for `testing-library` and `jest-dom`. This is due to this course using `eslint version 9` and the respective plugins [not yet compatible](https://github.com/testing-library/eslint-plugin-testing-library/issues/853).
+
+The option we have is to either go down an `eslint` version or wait for the plugins to be compatible. We will go with the latter and update this course the moment they are made compatible.
+
+</Callout>
+
+## Testing the user interaction
+
+Let us write a test to check if the user can add a task to the list.
+
+```ts title="src/routes/page.test.ts"
+import { describe, test, expect } from 'vitest';
+import { render, screen } from '@testing-library/svelte';
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    expect(input).toBeInTheDocument();
+    expect(button).toBeInTheDocument();
+  });
+
+  // [!code ++]
+  test('should add task to list when add button is clicked', () => {});
+});
+```
+
+So, how can we test user interaction? If we look at the docs of `Testing Library`, you can see a section for `User Actions` under the `Core API` and a page for `Firing Events`. [Here's the exact link to the page](https://testing-library.com/docs/dom-testing-library/api-events).
+
+Inputs are usually changed, and buttons are clicked. We pretty much end up with something like this:
+
+```ts title="src/routes/page.test.ts"
+import { describe, test, expect } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/svelte'; // [!code highlight]
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    expect(input).toBeInTheDocument();
+    expect(button).toBeInTheDocument();
+  });
+
+  // [!code highlight:11]
+  test('should add task to list when add button is clicked', async () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    await fireEvent.input(input, { target: { value: 'New Task' } });
+    await fireEvent.click(button);
+
+    expect(screen.getByText('New Task')).toBeInTheDocument();
+  });
+});
+```
+
+**Note:** We await for the input to be changed before we click the button. This makes sure that the input is actually changed before we click the button. Also, we do not use `fireEvent.change` for the input but rather `fireEvent.input`, this has to do with Svelte's reactive updates. **EITHER WAY, THIS IS NOT A GOOD WAY TO TEST AND WE'LL SOON REFACTOR IT TO USE A BETTER WAY.**
+
+Now, if you run your tests, they should be passing! But there is still a problem:
+
+- To amplify the problem significantly, let us make the input field `readonly` and see if our tests still pass.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity -->
+
+<div>
+  <!-- Some of the code omitted for brevity -->
+
+	<!-- [!code highlight] -->
+  <input readonly id="task-input" bind:value={taskName} />
+
+  <!-- Some of the code omitted for brevity -->
+</div>
+
+```
+
+Our tests will still pass! But, we know that the user cannot type in the input field. What we have right now is a false positive.
+
+We could have avoided this problem by testing user interaction differently. Even the docs recommend another library called `user-event` for testing user interaction. [Here's the link to the docs](https://testing-library.com/docs/user-event/intro)
+
+Let us install `user-event` and use it in our tests.
+
+```sh
+npm install -D @testing-library/user-event
+```
+
+Since user interactions are asynchronous (just like how we did for fireEvent), we need to use `async`, `await`, and `waitFor` from `@testing-library/svelte` for the changes to take effect. (read more about [async methods](https://testing-library.com/docs/dom-testing-library/api-async))
+
+```ts title="src/routes/page.test.ts"
+import { describe, test, expect } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/svelte'; // [!code highlight]
+import userEvent from '@testing-library/user-event'; // [!code ++]
+
+import Page from './+page.svelte';
+
+describe('Page', () => {
+  test('should render input field and add button', () => {
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    expect(input).toBeInTheDocument();
+    expect(button).toBeInTheDocument();
+  });
+
+  test('should add task to list when add button is clicked', async () => {
+    const user = userEvent.setup(); // [!code ++]
+    render(Page);
+
+    const input = screen.getByRole('textbox', { name: 'Add Task:' });
+    const button = screen.getByRole('button', { name: 'Add' });
+
+    // [!code highlight:2]
+    await user.type(input, 'New Task');
+    await user.click(button);
+
+    // [!code highlight:3]
+    await waitFor(() => {
+      expect(screen.getByText('New Task')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+Our tests **should fail**. Because we are using `readonly` on the input field, remove the `readonly` attribute from the input field and rerun the tests.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity -->
+
+<div>
+  <!-- Some of the code omitted for brevity -->
+
+	<!-- [!code highlight] -->
+  <input id="task-input" bind:value={taskName} />
+
+  <!-- Some of the code omitted for brevity -->
+</div>
+
+```
+
+Our tests should pass now. We also have a more robust test for user interaction.
+
+Now, we have made a decent amount of progress on tests. Remember where we left our actual business logic? In the next section, let us return to that with `TDD` (Test Driven Development).
+
+At this point, your code should be a good match to the branch of the repository: [5-writing-tests](https://github.com/Frontend-Hire/todo-app-svelte-tdd-typescript/tree/5-writing-tests)

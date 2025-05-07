@@ -12,6 +12,7 @@
     "---Courses---",
     "courses/todo-app-react",
     "courses/stackpack",
-    "courses/login-register-flow"
+    "courses/login-register-flow",
+    "courses/todo-app-svelte"
   ]
 }

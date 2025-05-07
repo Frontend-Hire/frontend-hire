@@ -1,0 +1,321 @@
+---
+title: Component Composition
+description: We will show you how to use composition to improve your code. Composition enables you to build complex UIs out of simple components.
+---
+
+## What is Component Composition?
+
+Component composition is the idea of using a component inside another component. This compelling idea allows you to build complex UIs out of simple components.
+
+We did this in the last section when we refactored the label, the input, and the button into a single component called `AddTask`, which we then used inside the `Page` component.
+
+But let's look at a more specific case of composition.
+
+### TaskList and TaskListItem
+
+We currently have a list of tasks we're rendering in the `Page` component. Let's extract that into a separate component called `TaskList`.
+
+```svelte title="src/routes/TaskList.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+
+  export let tasks: Task[];
+</script>
+
+<ul>
+  {#each tasks as task (task.id)}
+    <li>{task.title}</li>
+  {/each}
+</ul>
+```
+
+Now, we can use this component inside the `Page` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+  import TaskList from './TaskList.svelte'; // [!code ++]
+
+  let tasks: Task[] = [];
+
+  const addTask = (taskName: string) => {
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskName, isCompleted: false },
+    ];
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <AddTask {addTask} />
+  <!-- [!code highlight] -->
+  <TaskList {tasks} />
+</div>
+```
+
+Let's also extract the `TaskListItem` component from `TaskList`.
+
+```svelte title="src/routes/TaskListItem.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+
+  export let task: Task;
+</script>
+
+<li>{task.title}</li>
+```
+
+Now, we can use this component inside the `TaskList` component.
+
+```svelte title="src/routes/TaskList.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import TaskListItem from './TaskListItem.svelte'; // [!code ++]
+
+  export let tasks: Task[];
+</script>
+
+<ul>
+  {#each tasks as task (task.id)}
+    <!-- [!code highlight] -->
+    <TaskListItem {task} />
+  {/each}
+</ul>
+```
+
+Our code is now more modular and easier to understand. Our UI is now composed of smaller components, too.
+
+This refactoring sounds okay, but we are passing a lot of unnecessary props compared to our initial implementation and lose some natural semantics in our code.
+
+- We pass the `title` prop to the `TaskListItem` component. It would be nicer if we could pass it like `<TaskListItem>{task.title}</TaskListItem>`.
+- We pass the `tasks` prop to the `TaskList` component and just forward the title from it to the `TaskListItem` component. How can we fix this?
+
+Let's remove these unnecessary props by using composition.
+
+### Refactoring TaskListItem
+
+Instead of passing the `title` prop to the `TaskListItem` component. Let's have a more natural API for it. We'll pass the title as slot content to the `TaskListItem` component.
+
+```svelte title="src/routes/TaskListItem.svelte"
+<li><slot /></li>
+```
+
+Now, we can use the `TaskListItem` component like this.
+
+```svelte title="src/routes/TaskList.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import TaskListItem from './TaskListItem.svelte';
+
+  export let tasks: Task[];
+</script>
+
+<ul>
+  {#each tasks as task (task.id)}
+    <!-- [!code highlight] -->
+    <TaskListItem>{task.title}</TaskListItem>
+  {/each}
+</ul>
+```
+
+### Refactoring TaskList
+
+Now, let's refactor the `TaskList` component. Instead of passing the `tasks` prop to the `TaskList` component, let's pass slot content to the `TaskList` component.
+
+```svelte title="src/routes/TaskList.svelte"
+<ul>
+  <slot />
+</ul>
+```
+
+Now, we can use the `TaskList` component like this. Remember to import the `TaskListItem` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+  // [!code highlight:2]
+  import TaskList from './TaskList.svelte';
+  import TaskListItem from './TaskListItem.svelte';
+
+  let tasks: Task[] = [];
+
+  const addTask = (taskName: string) => {
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskName, isCompleted: false },
+    ];
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <AddTask {addTask} />
+  <!-- [!code highlight:5] -->
+  <TaskList>
+    {#each tasks as task (task.id)}
+      <TaskListItem>{task.title}</TaskListItem>
+    {/each}
+  </TaskList>
+</div>
+```
+
+This code feels more natural and we're not passing any unnecessary props.
+
+<Callout>
+  Technically speaking, we are still passing the same props but in a different
+  way.
+</Callout>
+
+Let's see how powerful our composition is now. Assume we must show the number of tasks in the `TaskList` component. We can easily do that by adding a new component called `TaskListHeader` and using it inside the `TaskList` component.
+
+```svelte title="src/routes/TaskListHeader.svelte"
+<script lang="ts">
+  export let count: number;
+</script>
+
+<h2>Total Tasks ({count})</h2>
+```
+
+Now, we can use this component inside the `Page` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+  import TaskList from './TaskList.svelte';
+  import TaskListHeader from './TaskListHeader.svelte'; // [!code ++]
+  import TaskListItem from './TaskListItem.svelte';
+
+  let tasks: Task[] = [];
+
+  const addTask = (taskName: string) => {
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskName, isCompleted: false },
+    ];
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <AddTask {addTask} />
+  <TaskList>
+    <!-- [!code ++] -->
+    <TaskListHeader count={tasks.length} />
+    {#each tasks as task (task.id)}
+      <TaskListItem>{task.title}</TaskListItem>
+    {/each}
+  </TaskList>
+</div>
+```
+
+But we have a problem. The `TaskListHeader` component is not a list item inside the `TaskList` component. We can solve this issue by creating a `named slot` called `header` in the `TaskList` component and passing the `TaskListHeader` component to that `named slot`.
+
+```svelte title="src/routes/TaskList.svelte"
+<div>
+<!-- [!code highlight] -->
+  <slot name="header" />
+  <ul>
+    <slot />
+  </ul>
+</div>
+```
+
+Passing the `TaskListHeader` with a `slot="header"` will render the `TaskListHeader` component at the specified location.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+  import TaskList from './TaskList.svelte';
+  import TaskListHeader from './TaskListHeader.svelte';
+  import TaskListItem from './TaskListItem.svelte';
+
+  let tasks: Task[] = [];
+
+  const addTask = (taskName: string) => {
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskName, isCompleted: false },
+    ];
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <AddTask {addTask} />
+  <TaskList>
+    <!-- [!code highlight] -->
+    <TaskListHeader slot="header" count={tasks.length} />
+    {#each tasks as task (task.id)}
+      <TaskListItem>{task.title}</TaskListItem>
+    {/each}
+  </TaskList>
+</div>
+```
+
+Note how we pass the `TaskListHeader` component as a `header` slot to the `TaskList` component. This is how real composition works and is very powerful.
+
+### Performance Benefits
+
+There are also performance benefits to using composition. Let's say our `TaskList` component has a simple timer that updates every second. This would require state and effect in the `TaskList` component, but would that re-render the `TaskListItem` or the `TaskListHeader` component? Let's find out.
+
+```svelte title="src/routes/TaskList.svelte"
+<!-- [!code highlight:13] -->
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  let secondsPassed = 0;
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      secondsPassed += 1;
+    }, 1000);
+
+    return () => clearInterval(interval);
+  });
+</script>
+
+<div>
+  <slot name="header" />
+  <!-- [!code ++] -->
+  <p>Seconds passed: {secondsPassed}</p>
+  <ul>
+    <slot />
+  </ul>
+</div>
+```
+
+Let's add a `console.log` in the `TaskListItem` component with `afterUpdate`.
+
+```svelte title="src/routes/TaskListItem.svelte"
+<!-- [!code ++:7] -->
+<script lang="ts">
+  import { afterUpdate } from 'svelte';
+
+  afterUpdate(() => {
+    console.log('this rendered');
+  });
+</script>
+
+<li><slot /></li>
+```
+
+What do you see in the console? You should see that the `TaskListItem` component is not re-rendered. This is the power of composition.
+
+<Callout type="info">
+
+This is a very powerful feature of most UI frameworks and can take time to wrap your head around. But once you do, you can write performant and readable code without fancy optimizations. We recommend reading the article below for a more detailed explanation.
+
+- [Svelte Design Patterns](https://render.com/blog/svelte-design-patterns) by Eric Liu
+
+</Callout>
+
+Great, you can remove the `console.log` and the `afterUpdate` statements.
+
+In the next section, we'll summarise and leave you with a few suggestions for continuing this project to end up with a resume-worthy project.
+
+At this point, your code should be a good match to the branch of the repository: [8-component-composition](https://github.com/Frontend-Hire/todo-app-svelte-tdd-typescript/tree/8-component-composition)

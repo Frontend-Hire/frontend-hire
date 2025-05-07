@@ -1,0 +1,240 @@
+---
+title: Adding Tasks
+description: In this section, we'll add the ability to add tasks to the list.
+---
+
+Let us add interactivity by letting the user add tasks to the list. We'll add a text input and a button. When the user clicks the button, we'll add the text from the input to the list of tasks.
+
+## Adding a Text Input and Button
+
+First, add a text input and a button to the page. We'll add them just above the list of tasks.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity  -->
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code ++:2] -->
+  <input />
+  <button>Add</button>
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+
+<!-- Rest of the code omitted for brevity  -->
+```
+
+Though this is good enough for now, we can and **should** make it more accessible by adding a label for the input and a `for` attribute on the label that matches the `id` of the input.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity  -->
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code ++] -->
+  <label for='task-input'>Add Task: </label>
+  <!-- [!code highlight] -->
+  <input id='task-input' />
+  <button>Add</button>
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+
+<!-- Rest of the code omitted for brevity  -->
+```
+
+Now, clicking on the label will focus on the input.
+
+## Adding a Task
+
+The Add button doesn't do anything yet. Let's add a click handler to it that will log to the console for now.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity  -->
+
+<div>
+  <h1>Tasks</h1>
+  <label for="task-input">Add Task: </label>
+  <input id="task-input" />
+  <!-- [!code highlight] -->
+  <button on:click={() => console.log('Add')}>Add</button>
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+
+<!-- Rest of the code omitted for brevity  -->
+```
+
+Let's capture the value of the input and log it to the console. One of the ways to do this in Svelte is to bind a variable to track the value of the input.
+
+All we need to do is add a `bind:value` attribute to the input and track it in the `taskName` variable.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  // Some of the code omitted for brevity
+
+  let taskName = ''; // [!code ++]
+</script>
+
+<div>
+  <!-- Some of the code omitted for brevity  -->
+
+  <!-- [!code highlight] -->
+  <input id="task-input" bind:value={taskName} />
+
+  <!-- Some of the code omitted for brevity  -->
+</div>
+```
+
+Now, we can update the button click handler to log the value of the input.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity  -->
+
+<div>
+  <!-- Some of the code omitted for brevity  -->
+
+  <input id="task-input" bind:value={taskName} />
+  <!-- [!code highlight] -->
+  <button on:click={() => console.log(taskName)}>Add</button>
+
+  <!-- Some of the code omitted for brevity  -->
+</div>
+```
+
+Before we can even add tasks to the list, we have to update our current `tasks` variable that holds our list of tasks to be mutable a.k.a a `let`; otherwise, the list will not update when we add a task.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  // Some of the code omitted for brevity
+
+  // [!code highlight]
+  let tasks: Task[] = [
+    {
+      id: 1,
+      title: 'Learn Svelte',
+      isCompleted: true,
+      priority: 'p1',
+    },
+  ];
+
+  // Some of the code omitted for brevity
+</script>
+
+<!-- Rest of the code omitted for brevity  -->
+```
+
+We can add a task to the list by updating the `tasks` state variable. We can push the new task onto the end of the array but to re-render the list we must reassign the tasks array to itself. This is how reactivity in Svelte works, through assignments. This would have been natural if it was a primitive data type like a string or number. This is not the case with Objects and Arrays.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity  -->
+
+<div>
+  <!-- Some of the code omitted for brevity  -->
+
+  <!-- [!code highlight:6] -->
+  <button
+    on:click={() => {
+      tasks.push({ id: new Date().getTime(), title: taskName, isCompleted: false });
+      tasks = tasks;
+    }}>Add</button
+  >
+
+  <!-- Some of the code omitted for brevity  -->
+</div>
+```
+
+If that felt weird, there is a more meaningful way to add tasks to the list.
+
+```svelte title="src/routes/+page.svelte"
+<!-- Rest of the code omitted for brevity  -->
+
+<div>
+  <!-- Some of the code omitted for brevity  -->
+
+  <!-- [!code highlight:8] -->
+  <button
+    on:click={() => {
+      tasks = [
+        ...tasks,
+        { id: new Date().getTime(), title: taskName, isCompleted: false },
+      ];
+    }}>Add</button
+  >
+
+  <!-- Some of the code omitted for brevity  -->
+</div>
+```
+
+<Callout>
+  As discussed in the previous section, unique IDs are usually created by a
+  database. In this project, we'll use the [current time in
+  milliseconds](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTime)
+  as the ID for each task.
+</Callout>
+
+Type in the input and hit the `Add` button, we should be able to add tasks to the list!
+
+Our Svelte file is getting a bit long and messy, so let's separate the button's `on:click` handler into its function.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  type Priority = 'p1' | 'p2' | 'p3';
+
+  type Task = {
+    id: number;
+    title: string;
+    isCompleted: boolean;
+    priority?: Priority;
+  };
+
+  let tasks: Task[] = [
+    {
+      id: 1,
+      title: 'Learn Svelte',
+      isCompleted: true,
+      priority: 'p1',
+    },
+  ];
+
+  let taskName = '';
+
+  // [!code ++:6]
+  const addTask = () => {
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskName, isCompleted: false },
+    ];
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <label for="task-input">Add Task: </label>
+  <input id="task-input" bind:value={taskName} />
+  <!-- [!code highlight] -->
+  <button on:click={addTask}>Add</button>
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+This is how your final Svelte code should look.
+
+Awesome, but there are a ton of things that can go wrong when a user adds a task. For example, the user can add an empty task.
+
+This gives us a good opportunity to learn about **Testing**. We'll cover testing in the subsequent sections.
+
+At this point, your code should be a good match to the branch of the repository: [3-adding-tasks](https://github.com/Frontend-Hire/todo-app-svelte-tdd-typescript/tree/3-adding-tasks)

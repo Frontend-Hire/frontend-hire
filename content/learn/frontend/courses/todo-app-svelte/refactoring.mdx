@@ -1,0 +1,592 @@
+---
+title: Refactoring
+description: In this section, we'll discuss why refactoring is important, and how to do it.
+---
+
+## Why Refactor?
+
+We want to list a few reasons why refactoring is essential:
+
+- The first lines of code you write are usually not the best. You'll learn more about the problem you're solving as you go and find better ways to solve it.
+
+- Refactoring is the process of improving your code by writing it in a better way.
+
+- Refactoring is a way to improve the design of your code. It's a way to make your code more readable, maintainable, and extensible.
+
+- We always read more code than we write. So, writing code that's easy to read and understand is important.
+
+Now, of course, the topic of refactoring is vast. There are entire books written about it. So, we just covered the bare minimum here. In our case, we'll focus on our code to make it more readable, maintainable, and extensible and make some performance improvements.
+
+### Let's see our current file that contains the entire code for the Todo App
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  type Priority = 'p1' | 'p2' | 'p3';
+
+  type Task = {
+    id: number;
+    title: string;
+    isCompleted: boolean;
+    priority?: Priority;
+  };
+
+  let tasks: Task[] = [];
+
+  let taskName = '';
+
+  const addTask = () => {
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+    taskName = '';
+  };
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') addTask();
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <label for="task-input">Add Task: </label>
+  <input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+  <button on:click={addTask}>Add</button>
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+Honestly, this is not bad code, and it seems easy to read with around 42 lines of code. But we can still improve it. Here are a couple of things we find that can be improved:
+
+- The `Task` type is defined inside the `Page` component. This is not a good practice. We should move it outside the component.
+
+- The input and the button contain a good amount of logic that can be extracted into a separate component.
+
+Let's do these two things first. Of course, refactoring is a continuous process. So, we'll keep improving our code as we go.
+
+### Moving the `Task` type outside the `Page` component
+
+Move the `Task` type outside the `Page` component. We'll create a new file called `types.ts` inside the `src` folder and move the `Task` type there. We'll also move the `Priority` type there as well.
+
+```ts title="src/types.ts"
+type Priority = 'p1' | 'p2' | 'p3';
+
+export type Task = {
+  id: number;
+  title: string;
+  isCompleted: boolean;
+  priority?: Priority;
+};
+```
+
+Export the `Task` type from the `types.ts` file, and import it in the `App` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+import type { Task } from '../types'; // [!code ++]
+
+let tasks: Task[] = [];
+
+// Some of the code omitted for brevity
+</script>
+
+<!-- Rest of the code omitted for brevity -->
+```
+
+Our main file is already 10 lines shorter. Let's move on to the next step.
+
+### Extracting the input into a separate component
+
+Create a new `TaskInput.svelte` file inside the `src/routes` folder, at the same level as our `+page.svelte` file. We'll move the input and the respective label into this file.
+
+```svelte title="src/routes/TaskInput.svelte"
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+```
+
+Of course, this won't work because we're using `taskName` and `onKeydown` inside the `Input` component. We'll pass these as props to the `TaskInput` component.
+
+```svelte title="src/routes/TaskInput.svelte"
+<!-- [!code ++:4] -->
+<script lang="ts">
+  export let taskName: string;
+  export let onKeydown: (e: KeyboardEvent) => void;
+</script>
+
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+```
+
+Let's use the new `TaskInput` component in the `Page` component.`.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import TaskInput from './TaskInput.svelte'; // [!code ++]
+
+  let tasks: Task[] = [];
+
+  let taskName = '';
+
+  const addTask = () => {
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+    taskName = '';
+  };
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') addTask();
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code highlight] -->
+  <TaskInput bind:taskName {onKeydown} />
+  <button on:click={addTask}>Add</button>
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+Honestly, this is not a huge improvement at all. We just abstracted the label and input it into a separate component. Also, the number of lines has barely changed.
+
+But let's have a good look at our components. Can we move the button to our new `TaskInput` component? Let's try that.
+
+```svelte title="src/routes/TaskInput.svelte"
+<script lang="ts">
+  export let taskName: string;
+  export let onKeydown: (e: KeyboardEvent) => void;
+  export let addTask: () => void; // [!code ++]
+</script>
+
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+<!-- [!code ++] -->
+<button on:click={addTask}>Add</button>
+```
+
+We'll also pass the `addTask` function to the `TaskInput` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import TaskInput from './TaskInput.svelte';
+
+  let tasks: Task[] = [];
+
+  let taskName = '';
+
+  const addTask = () => {
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+    taskName = '';
+  };
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') addTask();
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code highlight] -->
+  <TaskInput bind:taskName {onKeydown} {addTask} />
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+We are getting there. Let's also think of a better name for the `TaskInput` component. We'll rename it to `AddTask`. Also, we'll rename to file to `AddTask.svelte`.
+
+```svelte title="src/routes/AddTask.svelte"
+<script lang="ts">
+  export let taskName: string;
+  export let onKeydown: (e: KeyboardEvent) => void;
+  export let addTask: () => void;
+</script>
+
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+<button on:click={addTask}>Add</button>
+```
+
+Our `Page` component must also be updated with the new name.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte'; // [!code highlight]
+
+  let tasks: Task[] = [];
+
+  let taskName = '';
+
+  const addTask = () => {
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+    taskName = '';
+  };
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') addTask();
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code highlight] -->
+  <AddTask bind:taskName {onKeydown} {addTask} />
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+Now, we can also move the `onKeydown` function to the `AddTask` component as it just calls the `addTask` function. Also, let's update the props accordingly.
+
+```svelte title="src/routes/AddTask.svelte"
+<script lang="ts">
+  export let taskName: string;
+  export let addTask: () => void;
+
+  // [!code ++:3]
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') addTask();
+  };
+</script>
+
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+<button on:click={addTask}>Add</button>
+```
+
+We'll also update the `Page` component accordingly.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+
+  let tasks: Task[] = [];
+
+  let taskName = '';
+
+  const addTask = () => {
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+    taskName = '';
+  };
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code highlight] -->
+  <AddTask bind:taskName {addTask} />
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+Now we can see some reduction in the number of lines. Now, there is one more refactoring we can do that would improve our app's performance.
+
+### Let's see the performance problem in our app
+
+Put up a console.log inside the `Page` component and see how many times it's being called when we type something in the input. We will do this by logging inside `afterUpdate` lifecycle hook.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { afterUpdate } from 'svelte'; // [!code ++]
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+
+  let tasks: Task[] = [];
+
+  let taskName = '';
+
+  const addTask = () => {
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+    taskName = '';
+  };
+
+  // [!code ++:3]
+  afterUpdate(() => {
+    console.log('Page Rendered');
+  });
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <AddTask bind:taskName {addTask} />
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+### Why is the `Page` component being rendered so many times?
+
+It all has to do with where our state is located. Our app has two states: `tasks` and `taskName`. The respective state is updated at different places in our app. The `tasks` state is updated inside the `addTask` function, and the `taskName` state is updated because it is bound to the input.
+
+We could argue that the `Page` component should be rendered when the `tasks` state is updated but not when the `taskName` state is updated. And we're right. But Svelte doesn't know that. Svelte will re-render the `Page` component whenever any state inside the `Page` is updated. And that's why the `Page` component is being rendered so many times.
+
+But we know the `taskName` state is only used inside the `AddTask` component. So, we can move the `taskName` state inside the `AddTask` component. Let's do that.
+
+```svelte title="src/routes/AddTask.svelte"
+<script lang="ts">
+  export let addTask: (taskName: string) => void; // [!code highlight]
+
+  let taskName = ''; // [!code highlight]
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') addTask(taskName); // [!code highlight]
+  };
+</script>
+
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+<!-- [!code highlight] -->
+<button on:click={() => addTask(taskName)}>Add</button>
+```
+
+We had to update our props as the `Page` component now needs to know what task the `AddTask` component sends.
+
+Let us also clean the `Page` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { afterUpdate } from 'svelte';
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+
+  let tasks: Task[] = [];
+
+  const addTask = (taskName: string) => { // [!code highlight]
+    const trimmedTaskName = taskName.trim();
+
+    if (!trimmedTaskName) return;
+
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: trimmedTaskName, isCompleted: false },
+    ];
+  };
+
+  afterUpdate(() => {
+    console.log('Page Rendered');
+  });
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <!-- [!code highlight] -->
+  <AddTask {addTask} />
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+Try typing something in the input now. You'll see that the `Page` component is not being rendered anymore unless a new task is added, which is expected.
+
+<Callout>
+  We want to mention that this is not a huge performance problem. But it's a
+  good approach to improving our app's performance and also readability. This
+  course has a [React](/learn/frontend/courses/todo-app-react/overview) version
+  where this approach can be super powerful and helps not use fancy tools like
+  useCallback, useMemo, etc.
+</Callout>
+
+### Oops, We seem to have broken something
+
+If you try to add a new task now, you'll see that the input is not being cleared. The `taskName` state is now inside the `AddTask` component. So, we need to clear the input inside the `AddTask` component.
+
+Though we saw this issue visually, we could have also caught it by running our existing tests. Some of our functionality might not always caught visually. So, it's always a good idea to run our tests after refactoring (in fact, have it running while refactoring too).
+
+Let's run our tests.
+
+```sh
+npm test
+```
+
+We can see that the `Input Clear Test` is failing. Let's fix it.
+
+```svelte title="src/routes/AddTask.svelte"
+<script lang="ts">
+  export let addTask: (taskName: string) => void;
+
+  let taskName = '';
+
+  // [!code highlight:7]
+  const onAddTask = () => {
+    if (!taskName.trim()) return;
+
+    addTask(taskName);
+
+    taskName = '';
+  };
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') onAddTask(); // [!code highlight]
+  };
+</script>
+
+<label for="task-input">Add Task: </label>
+<input id="task-input" bind:value={taskName} on:keydown={onKeydown} />
+<!-- [!code highlight] -->
+<button on:click={onAddTask}>Add</button>
+```
+
+We are proxying the `addTask` function inside the `onAddTask` function. This enables us to add more logic to the `onAddTask` function, clearing the input and passing the trimmed task to the parent without affecting the `addTask` function. This also cleans up the `Page` component.
+
+```svelte title="src/routes/+page.svelte"
+<script lang="ts">
+  import { afterUpdate } from 'svelte';
+  import type { Task } from '../types';
+  import AddTask from './AddTask.svelte';
+
+  let tasks: Task[] = [];
+
+  // [!code highlight:6]
+  const addTask = (taskName: string) => {
+    tasks = [
+      ...tasks,
+      { id: new Date().getTime(), title: taskName, isCompleted: false },
+    ];
+  };
+
+  afterUpdate(() => {
+    console.log('Page Rendered');
+  });
+</script>
+
+<div>
+  <h1>Tasks</h1>
+  <AddTask {addTask} />
+  <ul>
+    {#each tasks as task (task.id)}
+      <li>{task.title}</li>
+    {/each}
+  </ul>
+</div>
+```
+
+Our tests are passing now, and we have a much cleaner code.
+
+### Using the Form to contain the input and button
+
+A few folks in one of our webinars pointed out that we could have used a form to contain the input and the button. This is a good idea. As it will help eliminate the need for the `onKeydown` function. Let's do that.
+
+Let's do that now.
+
+```svelte title="src/routes/AddTask.svelte"
+<script lang="ts">
+  export let addTask: (taskName: string) => void;
+
+  let taskName = '';
+
+  const onAddTask = () => {
+    if (!taskName.trim()) return;
+
+    addTask(taskName);
+
+    taskName = '';
+  };
+</script>
+
+<!-- [!code highlight:5] -->
+<form on:submit={onAddTask}>
+  <label for="task-input">Add Task: </label>
+  <input id="task-input" bind:value={taskName} />
+  <button>Add</button>
+</form>
+```
+
+We removed the `onKeydown` function and the event listener from the input. We also wrapped the label, input, and button inside a `form` element. Our tests will still pass, but this approach has an issue. The form will be submitted when the button is clicked, and SvelteKit will make a `GET` request to the same page, this is why the focus is lost from input. We don't want that. We want to prevent the form from submitting. We can simply use the `preventDefault` modifier.
+
+```svelte title="src/routes/AddTask.svelte"
+<script lang="ts">
+  export let addTask: (taskName: string) => void;
+
+  let taskName = '';
+
+  const onAddTask = () => {
+    if (!taskName.trim()) return;
+
+    addTask(taskName);
+
+    taskName = '';
+  };
+</script>
+
+<!-- [!code highlight:5] -->
+<form on:submit|preventDefault={onAddTask}>
+  <label for="task-input">Add Task: </label>
+  <input id="task-input" bind:value={taskName} required />
+  <button>Add</button>
+</form>
+```
+
+We added a `submit` event listener to the form. We also added the `required` attribute to the input. This will prevent the form from submitting if the input is empty. We also called the `preventDefault` modifier to the submit event listener.
+
+We saw how good tests can help us maintain good code quality. We also saw how to improve our app's performance by moving the state to the right place.
+
+This was a straightforward example of refactoring. But we hope you have an idea of how to refactor your code.
+
+This is the end of this section. In the next section, we'll discuss component composition.
+
+At this point, your code should be a good match to the branch of the repository: [7-refactoring](https://github.com/Frontend-Hire/todo-app-svelte-tdd-typescript/tree/7-refactoring)
