@@ -1,0 +1,28 @@
+---
+title: Third-Party API
+description: Learn about Third-Party APIs for getting the user's location
+---
+
+Third-Party APIs are usually external services that provide information about the user's location. They mostly do this with just your [IP address](https://www.fortinet.com/resources/cyberglossary/what-is-ip-address).
+
+But wait how do they have access to your IP address?
+
+Every device that is connected to the internet has a unique IP address. This is also sent with each request to the server. These third-party providers use this information and approximate the location of the user and also save it in a database (they index it for fast lookup). The IP Address can be used to identify the user's location to almost a `city-level precision`.
+
+Check here for that kind of [information about your IP](https://whatismyipaddress.com/).
+
+So, this information is pretty much publicly available and can be used to render the regional pricing page.
+
+Various services provide this information. You can search around on Google for one that best fits your needs. In our case, our hosting provider [Vercel provides this information](https://vercel.com/docs/edge-network/headers#x-vercel-ip-country).
+
+<Callout>
+  Do note that if the user is behind a VPN, their IP address will be different
+  than their original IP address. That means you will see the information on the
+  user's tunneled IP address, which could be a different country than the one
+  you see on the original IP address. This is how we got the pricing page of
+  Google Workspace for the Netherlands.
+</Callout>
+
+## Conclusion
+
+This IP Address lookup is a great way to get the user's location and fits perfectly for our requirement as there is no friction with the user. In the next few sections, we will see the different rendering strategies to render the regional pricing page.

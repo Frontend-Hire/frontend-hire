@@ -1,0 +1,12 @@
+{
+  "title": "Design a Dynamic Pricing Page",
+  "description": "Learn how to design a dynamic pricing page",
+  "pages": [
+    "overview",
+    "geolocation-web-api",
+    "third-party-api",
+    "rendering-strategies",
+    "geo-redirection",
+    "summary"
+  ]
+}

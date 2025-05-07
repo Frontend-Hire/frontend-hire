@@ -1,0 +1,36 @@
+---
+title: Geolocation Web API
+description: Learn about Geolocation Web API
+---
+
+Geolocation Web API is available in [almost all browsers](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API#browser_compatibility). The way it works is pretty simple and the simplest example you can check right away is [Google Maps](https://www.google.com/maps).
+
+1. Go to Google Maps.
+2. Click on the locate me button, located usually at the bottom right corner of the screen.
+3. The browser should now ask you for permission to access your location.
+4. Tada! You should now be able to see your current location on the map.
+
+## So, can we use this API to render the pricing page?
+
+> Does not lead to good UX!
+
+We can but it has too much friction and does not lead to good UX! Also, the Geolocation Web API gives location with high accuracy, at a **latitude and longitude level of precision**.
+
+Do we need that amount of accuracy to render the pricing page?
+
+No, the majority of the cases just require a rough location of the user to render regional pricing. Usually, at a **country-level precision**.
+
+<Callout>
+Browsers would depend on various things to get the location. This is what the [Geolocation Web API Specification](https://www.w3.org/TR/geolocation/) states:
+
+> Common sources of location information include Global Positioning System (GPS) and location inferred from network signals such as IP address, RFID, WiFi and Bluetooth MAC addresses, and GSM/CDMA cell IDs, as well as user input. The API itself is agnostic of the underlying location information sources, and no guarantee is given that the API returns the device's actual location.
+
+</Callout>
+
+## Conclusion
+
+Geolocation Web API has its use cases. But for a pricing page, has zero use case. We will discuss the better solution in the next section.
+
+## More Reading
+
+- [User Location](https://web.dev/articles/user-location)

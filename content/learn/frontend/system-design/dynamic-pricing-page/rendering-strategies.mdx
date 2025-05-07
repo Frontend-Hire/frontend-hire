@@ -1,0 +1,60 @@
+---
+title: Rendering Strategies
+description: Different ways to render the pricing page
+---
+
+<Callout>
+  Honestly, most of you would know how to render the pricing page given that the
+  request has the information of the user's location. However, we have observed
+  a trend with people new to Next.js struggling to think about this approach.
+  Hence, wrote this chapter.
+</Callout>
+
+## Server Side Rendering (SSR)
+
+What is Server Side Rendering? If the document (page) that the client requested, is **built on request** and served by the server, then it is called Server Side Rendering.
+
+For example, the current page you are viewing uses SSR. Why? We have to do two checks before we can render the page. The first check is whether you are authenticated, and then whether you are authorized (pro user) to access the page. These checks happen on the server and if they pass, then the page is built and served to you.
+
+<Callout>
+  Can't we use SSG or CSR for this purpose? We can but that means we would have
+  to make more network calls. With SSR, we don't have to make a lot of network
+  calls. We will see how that would work in the respective sections.
+</Callout>
+
+We know that when we request the pricing page, the server has access to our IP address. This means we have the geographic information of the user.
+
+The flow would look something like the below:
+
+![A diagram showing the interaction between a User and a Server. The User sends an IP Address to the Server. The Server has three functions: getLocation(IP Address), getPricingOptions(Location), and renderPricingPage(options). The Server sends back a Regional Pricing Page to the User.](./assets/pricing-ssr.webp)
+
+But we would not create a system design to teach you something this simple! This sounds simple to implement but can drastically change your application's architecture. How? Let us consider your current application first.
+
+- Do you show pricing on the landing page?
+- Is your current landing page static?
+
+The above answers to the above question greatly impact your approach to the problem.
+
+Most landing pages are design-heavy and best generated with static site generation. Now, if your landing page also includes the pricing section (that is SSR) then your whole page can no longer be static (if you force it to be static, the pricing won't be regionally available). Meaning these changes can greatly impact how fast your marketing pages load.
+
+So, how to solve this? Well, we can still keep it static.
+
+## Static Site Generation (SSG)
+
+What is Static Site Generation? To keep it simple, this is SSR but the pages are **built well before the request is made**. These are built usually at the time of deployment. Meaning the page has to be just served to the client. No building again at request time.
+
+But then how do we keep the pricing section dynamic? Pretty simple. Make a network call to grab the pricing options. Of course, you will see empty pricing options (or some kind of loader) till you get the pricing options. The flow would look something like the below:
+
+![A diagram showing interactions between a User and two Server components. The top Server renders a Pricing Page UI without exact pricing. The bottom Server processes IP Address to get location and pricing options. Arrows indicate data flow between User and Servers. A note suggests both could be the same server. The diagram emphasizes that IP Address is not needed for the initial pricing page request.](./assets/pricing-ssg.webp)
+
+Note, that the second server call is a simple fetch request to get the pricing options. Based on how well you handle the loading states the experience can be as good as SSR.
+
+## Conclusion
+
+But there is still a small impact when it comes to SEO. Crawlers can miss this information because it is not available immediately. Honestly, this is not a vital SEO issue. If you try to search for the same Google Workspace Pricing information in India, the search results would include the USD pricing. SEO is difficult to get right and takes a lot of time to even reflect on the results.
+
+Just decide on what approach seems feasible and maybe also run a few benchmarks to see which one is the best. Every application has different needs. Keeping it SSR has a lot of benefits. But, it is not always feasible.
+
+For example, the Frontend Hire landing page is SSR. Because a bunch of our server logic dictates the pricing page (including the checkout buttons). But whereas our [Founder's dev agency](https://www.withyhr.com/) is SSG.
+
+But there is a fancy way to get SSG with no extra network calls. That is what we will see in the next section.
