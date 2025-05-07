@@ -1,3 +1,4 @@
+import { baseUrl, createMetadata } from '@/lib/metadata';
 import { Banner } from 'fumadocs-ui/components/banner';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { Inter } from 'next/font/google';
@@ -7,6 +8,16 @@ import './global.css';
 
 const inter = Inter({
   subsets: ['latin'],
+});
+
+export const metadata = createMetadata({
+  title: {
+    template: '%s | Frontend Hire',
+    default: 'Frontend Hire',
+  },
+  description:
+    'Learn Frontend and Product Skills while working on practical stuff And get hired or build your own product',
+  metadataBase: baseUrl,
 });
 
 export default function Layout({ children }: { children: ReactNode }) {
