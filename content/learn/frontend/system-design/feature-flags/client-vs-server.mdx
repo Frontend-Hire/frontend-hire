@@ -1,0 +1,37 @@
+---
+title: Client-Side vs. Server-Side
+description: Weigh the pros and cons of evaluating feature flags on the client versus the server.
+---
+
+## Server-Side Evaluation:
+
+- How it works: Server determines flag states before sending response/rendering page.
+
+- Pros: Secure (flag logic not exposed), consistent experience, good for critical backend logic, no UI flicker.
+
+- Cons: Can require a server roundtrip/page reload for changes (unless using real-time updates), server load.
+
+- Example: Backend API returning different data structures. PHP/Node.js rendering different templates.
+
+- Diagram: User -> Request -> Server (evaluates flags, builds response) -> Response to User.
+
+## Client-Side Evaluation:
+
+- How it works: Client (browser/mobile app) fetches flag configurations and evaluates them locally.
+
+- Pros: Dynamic UI updates without page reloads, can reduce server load for evaluation logic, good for UI-specific flags.
+
+- Cons: Flags/rules potentially exposed to users, initial fetch latency for flags, potential for UI flicker ("flash of default content").
+
+- Example: JavaScript framework showing/hiding components, mobile app enabling a new screen.
+
+- Diagram: User -> Initial Page Load -> Client Fetches Flags -> Client Evaluates Flags & Updates UI.
+
+## Hybrid Approaches:
+
+- Using both for different needs. Bootstrapping client with server-evaluated flags.
+
+<Callout>
+  For sensitive features or core business logic, server-side evaluation is
+  generally preferred for security and consistency.
+</Callout>

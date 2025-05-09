@@ -1,0 +1,13 @@
+{
+  "title": "Feature Flags",
+  "description": "Learn how to design a feature behind a flag",
+  "pages": [
+    "overview",
+    "why-use-feature-flags",
+    "types",
+    "client-vs-server",
+    "managing-flags",
+    "not-everything-can-be-a-flag",
+    "summary"
+  ]
+}

@@ -1,0 +1,55 @@
+---
+title: Managing Flags
+description: Learn about storing, organizing, and managing the lifecycle of your feature flags to avoid "flag debt."
+---
+
+## Storing Flag Configurations:
+
+- Simple config files (e.g., JSON, YAML): Good for small projects, limited dynamic control.
+
+- Database: Custom solution, more flexible, requires own management UI.
+
+### Feature Flag as a Service (FFaaS) Platforms:
+
+- Examples: LaunchDarkly, Optimizely, ConfigCat, Vercel Flags, Unleash (self-hosted).
+
+- Benefits: UI for management, SDKs, advanced targeting, audit logs, analytics integration.
+
+- Diagram: Your App - FFaaS SDK - FFaaS Platform.
+
+## Flag Definition & Organization:
+
+- Naming conventions (clear, consistent).
+
+- Descriptions (what it does, why it exists).
+
+- Ownership and teams.
+
+- Tags/categories.
+
+## The Lifecycle of a Feature Flag:
+
+- Creation & Initial Rollout.
+
+- Monitoring & Iteration.
+
+### Cleanup: The Importance of Removing Old Flags.
+
+- Technical debt: Stale flags clutter code and configuration.
+
+- Performance impact.
+
+- Potential for unexpected behavior.
+
+- Strategies for identifying and removing stale flags.
+
+## User Interface for Management:
+
+- What a good FF management UI provides (if not using FFaaS).
+
+- Toggling flags, setting targeting rules, viewing rollout status.
+
+<Callout>
+  Never underestimate the importance of cleaning up old feature flags! They are
+  meant to be temporary for most use cases.
+</Callout>
