@@ -1,0 +1,12 @@
+{
+  "title": "Profile Page",
+  "description": "Refactor a profile page to be more maintainable.",
+  "pages": [
+    "overview",
+    "problem",
+    "solution-part-1",
+    "solution-part-2",
+    "solution-part-3",
+    "summary"
+  ]
+}

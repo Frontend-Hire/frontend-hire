@@ -1,0 +1,353 @@
+---
+title: Solution Part 2
+description: Let us improve the fake APIs
+---
+
+Let us look at the code with the problem highlighted:
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    // [!code highlight:10]
+    setTimeout(() => {
+      const fakeData: ProfileType = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleSave = (formData: ProfileType) => {
+    // [!code highlight:4]
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## API Separation
+
+We should first make them promises instead of just timeouts. We should also take them out of the `App` component and into a dedicate file `api.ts` in our `features/profile` folder.
+
+```tsx title="src/features/profile/api.ts"
+import type { ProfileType } from './types';
+
+const FAKE_PROFILE: ProfileType = {
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export function fetchProfile() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(FAKE_PROFILE);
+    }, 1000);
+  });
+}
+
+export function saveProfile(updatedProfile: ProfileType) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(updatedProfile);
+    }, 1000);
+  });
+}
+```
+
+Now we can import them into `App.tsx`
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+// [!code highlight]
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    // [!code highlight:4]
+    fetchProfile().then((data) => {
+      setProfile(data);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleSave = (formData: ProfileType) => {
+    // [!code highlight:6]
+    setIsLoading(true);
+    saveProfile(formData).then((savedData) => {
+      setProfile(savedData);
+      setEditMode(false);
+      setIsLoading(false);
+    });
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## Dealing with TypeScript
+
+There are two TypeScript errors here, but it is the same error message in both the cases.
+
+- The first error at `setProfile(data)`
+- The second error at `setProfile(savedData)`
+
+```text
+Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<ProfileType | null>'.ts(2345)
+```
+
+This is happening because our API is not typed yet, the default type for promises upon resolve is `unknown`. The simplest fix is to explicitly type the promises.
+
+```tsx title="src/features/profile/api.ts"
+import type { ProfileType } from './types';
+
+const FAKE_PROFILE: ProfileType = {
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export function fetchProfile() {
+  // [!code highlight]
+  return new Promise<ProfileType>((resolve) => {
+    setTimeout(() => {
+      resolve(FAKE_PROFILE);
+    }, 1000);
+  });
+}
+
+export function saveProfile(updatedProfile: ProfileType) {
+  // [!code highlight]
+  return new Promise<ProfileType>((resolve) => {
+    setTimeout(() => {
+      resolve(updatedProfile);
+    }, 1000);
+  });
+}
+```
+
+<Callout>
+  Even in production projects, this is how it is done. This is because APIs are
+  essentially black boxes and sometimes even live on different systems.
+  TypeScript cannot infer the types due to this constraint and the developer has
+  to manually type them. However, there are tools and libraries that can help
+  with this process better such as [tRPC](https://trpc.io/).
+</Callout>
+
+## Mock Service Worker (MSW) for mocking API calls
+
+[MSW](https://mswjs.io/) is the industry standard way for mocking API calls. This is great in the case of testing or development without proper backend servers. Essentially perfect in our case. This is also framework or library agnostic, which means it can be used with any framework or library and makes it a fundamental tool for frontend developers.
+
+Let us install it in our project:
+
+```sh
+pnpm add msw@latest --save-dev
+```
+
+Since we are in a client side project, to work with MSW on the browser, we will need to register a [service worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) that helps MSW do its thing.
+
+<Callout>
+  What is a service worker? They are quite versatile and run in the background.
+  They enable a lot of things like caching, intercepting requests, offline
+  support, push notifications, etc. You can read more about them
+  [here](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API).
+</Callout>
+
+The below command will create the service worker in the `public` directory for us, we also do not have to touch this file at all.
+
+```sh
+pnpm dlx msw init public --save
+```
+
+Next, we have to setup the worker with handlers for our API calls. Create a new file called `src/mocks/browser.ts` and add the following code:
+
+```ts title="src/mocks/browser.ts"
+import { setupWorker } from 'msw/browser';
+
+export const worker = setupWorker();
+```
+
+This still doesn't do much. We have to add the handlers for our API calls. Create a new file called `src/mocks/handlers.ts` and add the following code:
+
+```ts title="src/mocks/handlers.ts"
+import { http, HttpResponse, delay } from 'msw';
+import type { ProfileType } from '../features/profile/types';
+
+const FAKE_PROFILE: ProfileType = {
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export const handlers = [
+  http.get('http://localhost:9000/profile', () => {
+    return HttpResponse.json(FAKE_PROFILE, { status: 200 });
+  }),
+
+  http.patch('http://localhost:9000/profile', async ({ request }) => {
+    const updatedProfile = (await request.json()) as ProfileType;
+
+    FAKE_PROFILE.firstName = updatedProfile.firstName;
+    FAKE_PROFILE.lastName = updatedProfile.lastName;
+    FAKE_PROFILE.age = updatedProfile.age;
+    FAKE_PROFILE.companyName = updatedProfile.companyName;
+
+    await delay(); // Simulates a network delay
+
+    return HttpResponse.json(FAKE_PROFILE, { status: 200 });
+  }),
+];
+```
+
+What is happening here? We are using the `http` method provided by MSW to register the handlers. The first handler is for the `fetchProfile` API call and the second is for the `saveProfile` API call. We make assumptions based on the backend API calls and structure these handlers.
+
+Now, we can import them into worker file `src/mocks/browser.ts`.
+
+```ts title="src/mocks/browser.ts"
+import { setupWorker } from 'msw/browser';
+// [!code highlight]
+import { handlers } from './handlers';
+
+// [!code highlight]
+export const worker = setupWorker(...handlers);
+```
+
+Let us now replace our fake APIs with the MSW APIs:
+
+```tsx title="src/features/profile/api.ts"
+import type { ProfileType } from './types';
+
+// [!code highlight:7]
+export async function fetchProfile() {
+  const data: ProfileType = await fetch('http://localhost:9000/profile').then(
+    (res) => res.json(),
+  );
+
+  return data;
+}
+
+// [!code highlight:11]
+export async function saveProfile(updatedProfile: ProfileType) {
+  const data: ProfileType = await fetch('http://localhost:9000/profile', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedProfile),
+  }).then((res) => res.json());
+
+  return data;
+}
+```
+
+Hmm, things seem to have broken.
+
+## Defer and Conditionally Enable MSW
+
+Registering a service worker is an async operation, so we need to defer the rendering of our app until the worker is registered.
+
+In our `main.tsx` file, we will add the following code:
+
+```tsx title="src/main.tsx"
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+async function enableMocking() {
+  if (process.env.NODE_ENV !== 'development') {
+    return;
+  }
+
+  const { worker } = await import('./mocks/browser');
+
+  return worker.start();
+}
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+});
+```
+
+We have to also install `@types/node` package to access the `process` object.
+
+```sh
+pnpm add @types/node --save-dev
+```
+
+Now check your dev server and you should be able to see the app without any errors. Also, in the browser console, you should see the following message:
+
+```
+[MSW] Mocking enabled.
+```
+
+<Callout>
+  Whenever possible, work with the real APIs and only mock the APIs that are not
+  available in your environment. Phase out the mocking as soon as possible. But
+  mocks can help you simulate the behavior of the APIs quite well.
+</Callout>
+
+With this you now have a great mocking setup for your app. In the next chapter, we will bring in React Query to better fetch and mutate data.
