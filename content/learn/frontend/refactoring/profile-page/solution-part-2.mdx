@@ -193,3 +193,161 @@ export function saveProfile(updatedProfile: ProfileType) {
 </Callout>
 
 ## Mock Service Worker (MSW) for mocking API calls
+
+[MSW](https://mswjs.io/) is the industry standard way for mocking API calls. This is great in the case of testing or development without proper backend servers. Essentially perfect in our case. This is also framework or library agnostic, which means it can be used with any framework or library and makes it a fundamental tool for frontend developers.
+
+Let us install it in our project:
+
+```sh
+pnpm add msw@latest --save-dev
+```
+
+Since we are in a client side project, to work with MSW on the browser, we will need to register a [service worker](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) that helps MSW do its thing.
+
+<Callout>
+  What is a service worker? They are quite versatile and run in the background.
+  They enable a lot of things like caching, intercepting requests, offline
+  support, push notifications, etc. You can read more about them
+  [here](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API).
+</Callout>
+
+The below command will create the service worker in the `public` directory for us, we also do not have to touch this file at all.
+
+```sh
+pnpm dlx msw init public --save
+```
+
+Next, we have to setup the worker with handlers for our API calls. Create a new file called `src/mocks/browser.ts` and add the following code:
+
+```ts title="src/mocks/browser.ts"
+import { setupWorker } from 'msw/browser';
+
+export const worker = setupWorker();
+```
+
+This still doesn't do much. We have to add the handlers for our API calls. Create a new file called `src/mocks/handlers.ts` and add the following code:
+
+```ts title="src/mocks/handlers.ts"
+import { http, HttpResponse, delay } from 'msw';
+import type { ProfileType } from '../features/profile/types';
+
+const FAKE_PROFILE: ProfileType = {
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export const handlers = [
+  http.get('http://localhost:9000/profile', () => {
+    return HttpResponse.json(FAKE_PROFILE, { status: 200 });
+  }),
+
+  http.patch('http://localhost:9000/profile', async ({ request }) => {
+    const updatedProfile = (await request.json()) as ProfileType;
+
+    FAKE_PROFILE.firstName = updatedProfile.firstName;
+    FAKE_PROFILE.lastName = updatedProfile.lastName;
+    FAKE_PROFILE.age = updatedProfile.age;
+    FAKE_PROFILE.companyName = updatedProfile.companyName;
+
+    await delay(); // Simulates a network delay
+
+    return HttpResponse.json(FAKE_PROFILE, { status: 200 });
+  }),
+];
+```
+
+What is happening here? We are using the `http` method provided by MSW to register the handlers. The first handler is for the `fetchProfile` API call and the second is for the `saveProfile` API call. We make assumptions based on the backend API calls and structure these handlers.
+
+Now, we can import them into worker file `src/mocks/browser.ts`.
+
+```ts title="src/mocks/browser.ts"
+import { setupWorker } from 'msw/browser';
+// [!code highlight]
+import { handlers } from './handlers';
+
+// [!code highlight]
+export const worker = setupWorker(...handlers);
+```
+
+Let us now replace our fake APIs with the MSW APIs:
+
+```tsx title="src/features/profile/api.ts"
+import type { ProfileType } from './types';
+
+// [!code highlight:7]
+export async function fetchProfile() {
+  const data: ProfileType = await fetch('http://localhost:9000/profile').then(
+    (res) => res.json(),
+  );
+
+  return data;
+}
+
+// [!code highlight:11]
+export async function saveProfile(updatedProfile: ProfileType) {
+  const data: ProfileType = await fetch('http://localhost:9000/profile', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedProfile),
+  }).then((res) => res.json());
+
+  return data;
+}
+```
+
+Hmm, things seem to have broken.
+
+## Defer and Conditionally Enable MSW
+
+Registering a service worker is an async operation, so we need to defer the rendering of our app until the worker is registered.
+
+In our `main.tsx` file, we will add the following code:
+
+```tsx title="src/main.tsx"
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+async function enableMocking() {
+  if (process.env.NODE_ENV !== 'development') {
+    return;
+  }
+
+  const { worker } = await import('./mocks/browser');
+
+  return worker.start();
+}
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+});
+```
+
+We have to also install `@types/node` package to access the `process` object.
+
+```sh
+pnpm add @types/node --save-dev
+```
+
+Now check your dev server and you should be able to see the app without any errors. Also, in the browser console, you should see the following message:
+
+```
+[MSW] Mocking enabled.
+```
+
+<Callout>
+  Whenever possible, work with the real APIs and only mock the APIs that are not
+  available in your environment. Phase out the mocking as soon as possible. But
+  mocks can help you simulate the behavior of the APIs quite well.
+</Callout>
+
+With this you now have a great mocking setup for your app. In the next chapter, we will bring in React Query to better fetch and mutate data.
