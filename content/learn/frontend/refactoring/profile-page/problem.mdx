@@ -7,6 +7,13 @@ description: Where can you encounter this problem?
 
 The starter code for this series is [here](https://github.com/Frontend-Hire/refactoring-profile-page).
 
+After you clone the repo, navigate into the project directory, install the dependencies and start the app:
+
+```bash
+pnpm install
+pnpm dev
+```
+
 This is a common problem in **many codebases**. The problem is essentially the tight coupling of the UI and business logic.
 
 Here is the file with the problem:
@@ -153,9 +160,58 @@ function App() {
         <h1>Profile Page</h1>
         // [!code highlight:54]
         {editMode ? (
-          <div className="profile-form">// ... (form content)</div>
+          <div className="profile-form">
+            <label>
+              First Name:
+              <input
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Last Name:
+              <input
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Age:
+              <input
+                name="age"
+                type="number"
+                value={formData.age}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Company Name:
+              <input
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+              />
+            </label>
+            <button onClick={handleSave}>Save</button>
+          </div>
         ) : (
-          <div className="profile-display">// ... (display content)</div>
+          <div className="profile-display">
+            <p>
+              <strong>First Name:</strong> {profile.firstName}
+            </p>
+            <p>
+              <strong>Last Name:</strong> {profile.lastName}
+            </p>
+            <p>
+              <strong>Age:</strong> {profile.age}
+            </p>
+            <p>
+              <strong>Company:</strong> {profile.companyName}
+            </p>
+            <button onClick={() => setEditMode(true)}>Edit Profile</button>
+          </div>
         )}
       </section>
     </main>

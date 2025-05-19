@@ -1,4 +1,624 @@
 ---
 title: Solution Part 1
-description: We will in this part refactor the conditional logic
+description: We will in this part refactor the conditional logic to be cleaner
 ---
+
+Let us look at the code with the problem highlighted:
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+
+type Profile = {
+  firstName: string;
+  lastName: string;
+  age: number;
+  companyName: string;
+};
+
+function App() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<Profile>({
+    firstName: '',
+    lastName: '',
+    age: 0,
+    companyName: '',
+  });
+
+  useEffect(() => {
+    setTimeout(() => {
+      const fakeData: Profile = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = () => {
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        // [!code highlight:54]
+        {editMode ? (
+          <div className="profile-form">
+            <label>
+              First Name:
+              <input
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Last Name:
+              <input
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Age:
+              <input
+                name="age"
+                type="number"
+                value={formData.age}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Company Name:
+              <input
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+              />
+            </label>
+            <button onClick={handleSave}>Save</button>
+          </div>
+        ) : (
+          <div className="profile-display">
+            <p>
+              <strong>First Name:</strong> {profile.firstName}
+            </p>
+            <p>
+              <strong>Last Name:</strong> {profile.lastName}
+            </p>
+            <p>
+              <strong>Age:</strong> {profile.age}
+            </p>
+            <p>
+              <strong>Company:</strong> {profile.companyName}
+            </p>
+            <button onClick={() => setEditMode(true)}>Edit Profile</button>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## Separating out the UI
+
+The `editMode` state is used to determine whether the form or the display is rendered. Meaning we can create two dedicated components for the form and the display.
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+
+type Profile = {
+  firstName: string;
+  lastName: string;
+  age: number;
+  companyName: string;
+};
+
+// [!code highlight:25]
+function ProfileDisplay({
+  profile,
+  setEditMode,
+}: {
+  profile: Profile;
+  setEditMode: (value: boolean) => void;
+}) {
+  return (
+    <div className="profile-display">
+      <p>
+        <strong>First Name:</strong> {profile.firstName}
+      </p>
+      <p>
+        <strong>Last Name:</strong> {profile.lastName}
+      </p>
+      <p>
+        <strong>Age:</strong> {profile.age}
+      </p>
+      <p>
+        <strong>Company:</strong> {profile.companyName}
+      </p>
+      <button onClick={() => setEditMode(true)}>Edit Profile</button>
+    </div>
+  );
+}
+
+// [!code highlight:55]
+function ProfileForm({
+  formData,
+  handleChange,
+  handleSave,
+}: {
+  formData: Profile;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSave: () => void;
+}) {
+  return (
+    <div className="profile-form">
+      <label htmlFor="firstName">First Name:</label>
+
+      <input
+        type="text"
+        id="firstName"
+        name="firstName"
+        value={formData.firstName}
+        onChange={handleChange}
+      />
+
+      <label htmlFor="lastName">Last Name:</label>
+
+      <input
+        type="text"
+        id="lastName"
+        name="lastName"
+        value={formData.lastName}
+        onChange={handleChange}
+      />
+
+      <label htmlFor="age">Age:</label>
+
+      <input
+        type="number"
+        id="age"
+        name="age"
+        value={formData.age}
+        onChange={handleChange}
+      />
+
+      <label htmlFor="companyName">Company:</label>
+
+      <input
+        type="text"
+        id="companyName"
+        name="companyName"
+        value={formData.companyName}
+        onChange={handleChange}
+      />
+
+      <button onClick={handleSave}>Save</button>
+    </div>
+  );
+}
+
+function App() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<Profile>({
+    firstName: '',
+    lastName: '',
+    age: 0,
+    companyName: '',
+  });
+
+  useEffect(() => {
+    setTimeout(() => {
+      const fakeData: Profile = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = () => {
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        // [!code highlight:9]
+        {editMode ? (
+          <ProfileForm
+            formData={formData}
+            handleChange={handleChange}
+            handleSave={handleSave}
+          />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## Feature Folder
+
+Great! But let us put them in a dedicated `feature` folder for better organization.
+
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="features">
+      <Folder name="profile">
+        <File name="profile-display.tsx" />
+        <File name="profile-form.tsx" />
+        <File name="types.ts" />
+      </Folder>
+    </Folder>
+    <File name="App.tsx" />
+    <File name="App.css" />
+    <File name="main.tsx" />
+    <File name="index.css" />
+  </Folder>
+</Files>
+
+- We will also separate out the `Profile` type to its own file and export it as `ProfileType`. The suffix of `Type` is a convention to indicate that it is a type and helps not cause naming conflicts.
+- We will then create two files, `profile-display.tsx` and `profile-form.tsx`, which will hold the UI components for the profile page.
+- Finally, we import them in `App.tsx` and use them accordingly.
+
+```tsx title="src/features/profile/types.ts"
+// [!code highlight]
+export type ProfileType = {
+  firstName: string;
+  lastName: string;
+  age: number;
+  companyName: string;
+};
+```
+
+```tsx title="src/features/profile/profile-display.tsx"
+import type { ProfileType } from './types';
+
+export default function ProfileDisplay({
+  profile,
+  setEditMode,
+}: {
+  profile: ProfileType; // [!code highlight]
+  setEditMode: (value: boolean) => void;
+}) {
+  return (
+    <div className="profile-display">
+      <p>
+        <strong>First Name:</strong> {profile.firstName}
+      </p>
+      <p>
+        <strong>Last Name:</strong> {profile.lastName}
+      </p>
+      <p>
+        <strong>Age:</strong> {profile.age}
+      </p>
+      <p>
+        <strong>Company:</strong> {profile.companyName}
+      </p>
+      <button onClick={() => setEditMode(true)}>Edit Profile</button>
+    </div>
+  );
+}
+```
+
+```tsx title="src/features/profile/profile-form.tsx"
+import type { ProfileType } from './types';
+
+export default function ProfileForm({
+  formData,
+  handleChange,
+  handleSave,
+}: {
+  formData: ProfileType; // [!code highlight]
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSave: () => void;
+}) {
+  return (
+    <div className="profile-form">
+      <label htmlFor="firstName">First Name:</label>
+
+      <input
+        type="text"
+        id="firstName"
+        name="firstName"
+        value={formData.firstName}
+        onChange={handleChange}
+      />
+
+      <label htmlFor="lastName">Last Name:</label>
+
+      <input
+        type="text"
+        id="lastName"
+        name="lastName"
+        value={formData.lastName}
+        onChange={handleChange}
+      />
+
+      <label htmlFor="age">Age:</label>
+
+      <input
+        type="number"
+        id="age"
+        name="age"
+        value={formData.age}
+        onChange={handleChange}
+      />
+
+      <label htmlFor="companyName">Company:</label>
+
+      <input
+        type="text"
+        id="companyName"
+        name="companyName"
+        value={formData.companyName}
+        onChange={handleChange}
+      />
+
+      <button onClick={handleSave}>Save</button>
+    </div>
+  );
+}
+```
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+// [!code highlight:3]
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null); // [!code highlight]
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  // [!code highlight]
+  const [formData, setFormData] = useState<ProfileType>({
+    firstName: '',
+    lastName: '',
+    age: 0,
+    companyName: '',
+  });
+
+  useEffect(() => {
+    setTimeout(() => {
+      // [!code highlight]
+      const fakeData: ProfileType = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = () => {
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm
+            formData={formData}
+            handleChange={handleChange}
+            handleSave={handleSave}
+          />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## Can we improve the code further?
+
+Great, but can we further improve the code?
+
+- Our `App.tsx` file does not need to worry about the form `handleChange` and that logic should be moved to the `ProfileForm` component.
+- We can also move the respective `formData` state to the `ProfileForm` component.
+- Some minor changes will also be required to match the component APIs.
+
+```tsx title="src/features/profile/profile-form.tsx"
+import { useState } from 'react';
+import type { ProfileType } from './types';
+
+// [!code highlight:10]
+export default function ProfileForm({
+  initialFormData,
+  handleSave,
+}: {
+  initialFormData: ProfileType;
+  handleSave: (formData: ProfileType) => void;
+}) {
+  const [formData, setFormData] = useState<ProfileType>({
+    ...initialFormData,
+  });
+
+  // [!code highlight:6]
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  return (
+    <div className="profile-form">
+      <label htmlFor="firstName">First Name:</label>
+      <input
+        type="text"
+        id="firstName"
+        name="firstName"
+        value={formData.firstName}
+        onChange={handleChange}
+      />
+      <label htmlFor="lastName">Last Name:</label>
+      <input
+        type="text"
+        id="lastName"
+        name="lastName"
+        value={formData.lastName}
+        onChange={handleChange}
+      />
+      <label htmlFor="age">Age:</label>
+      <input
+        type="number"
+        id="age"
+        name="age"
+        value={formData.age}
+        onChange={handleChange}
+      />
+      <label htmlFor="companyName">Company:</label>
+      <input
+        type="text"
+        id="companyName"
+        name="companyName"
+        value={formData.companyName}
+        onChange={handleChange}
+      />
+      // [!code highlight]
+      <button onClick={() => handleSave(formData)}>Save</button>
+    </div>
+  );
+}
+```
+
+We made the following changes to the `ProfileForm` component:
+
+- It now only takes two props: `initialFormData` and `handleSave`.
+- The `formData` state is initialized with the `initialFormData` prop.
+- The `handleSave` prop is updated to pass the form data to the parent component.
+- The `handleChange` logic is directly moved here.
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    setTimeout(() => {
+      const fakeData: ProfileType = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  // [!code highlight]
+  const handleSave = (formData: ProfileType) => {
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+We made the following changes in the `App.tsx` file:
+
+- We removed all the references to the `formData` state.
+- We removd the `handleChange` logic.
+- We added the `initialFormData` prop to the `ProfileForm` component.
+- The `handleSave` prop is updated to receive the form data from the child component.
+
+Great, in the next chapter we will improve the fake APIs.

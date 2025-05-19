@@ -1,0 +1,195 @@
+---
+title: Solution Part 2
+description: We will in this part improve the fake APIs
+---
+
+Let us look at the code with the problem highlighted:
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    // [!code highlight:10]
+    setTimeout(() => {
+      const fakeData: ProfileType = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleSave = (formData: ProfileType) => {
+    // [!code highlight:4]
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## API Separation
+
+We should first make them promises instead of just timeouts. We should also take them out of the `App` component and into a dedicate file `api.ts` in our `features/profile` folder.
+
+```tsx title="src/features/profile/api.ts"
+import type { ProfileType } from './types';
+
+const FAKE_PROFILE: ProfileType = {
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export function fetchProfile() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(FAKE_PROFILE);
+    }, 1000);
+  });
+}
+
+export function saveProfile(updatedProfile: ProfileType) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(updatedProfile);
+    }, 1000);
+  });
+}
+```
+
+Now we can import them into `App.tsx`
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+// [!code highlight]
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    // [!code highlight:4]
+    fetchProfile().then((data) => {
+      setProfile(data);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleSave = (formData: ProfileType) => {
+    // [!code highlight:6]
+    setIsLoading(true);
+    saveProfile(formData).then((savedData) => {
+      setProfile(savedData);
+      setEditMode(false);
+      setIsLoading(false);
+    });
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## Dealing with TypeScript
+
+There are two TypeScript errors here, but it is the same error message in both the cases.
+
+- The first error at `setProfile(data)`
+- The second error at `setProfile(savedData)`
+
+```text
+Argument of type 'unknown' is not assignable to parameter of type 'SetStateAction<ProfileType | null>'.ts(2345)
+```
+
+This is happening because our API is not typed yet, the default type for promises upon resolve is `unknown`. The simplest fix is to explicitly type the promises.
+
+```tsx title="src/features/profile/api.ts"
+import type { ProfileType } from './types';
+
+const FAKE_PROFILE: ProfileType = {
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export function fetchProfile() {
+  // [!code highlight]
+  return new Promise<ProfileType>((resolve) => {
+    setTimeout(() => {
+      resolve(FAKE_PROFILE);
+    }, 1000);
+  });
+}
+
+export function saveProfile(updatedProfile: ProfileType) {
+  // [!code highlight]
+  return new Promise<ProfileType>((resolve) => {
+    setTimeout(() => {
+      resolve(updatedProfile);
+    }, 1000);
+  });
+}
+```
+
+<Callout>
+  Even in production projects, this is how it is done. This is because APIs are
+  essentially black boxes and sometimes even live on different systems.
+  TypeScript cannot infer the types due to this constraint and the developer has
+  to manually type them. However, there are tools and libraries that can help
+  with this process better such as [tRPC](https://trpc.io/).
+</Callout>
+
+## Mock Service Worker (MSW) for mocking API calls
