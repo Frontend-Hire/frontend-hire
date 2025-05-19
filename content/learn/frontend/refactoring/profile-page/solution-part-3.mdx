@@ -1,0 +1,723 @@
+---
+title: Solution Part 3
+description: Let us bring in React Query
+---
+
+Let us look at the code with the problem highlighted:
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  // [!code highlight:6]
+  useEffect(() => {
+    fetchProfile().then((data) => {
+      setProfile(data);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleSave = (formData: ProfileType) => {
+    // [!code highlight:6]
+    setIsLoading(true);
+    saveProfile(formData).then((savedData) => {
+      setProfile(savedData);
+      setEditMode(false);
+      setIsLoading(false);
+    });
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+- The `fetchProfile` and `saveProfile` functions are imported from the `api` module.
+- But we still make raw API call in the `useEffect` hook and in the `handleSave` function.
+- We also have to worry about errors, loading state, etc.
+- In fact, we are missing a lot of other things too like caching, retrying, etc.
+
+Handling the above issues is really difficult, and that is where `React Query` comes into the picture. An industry standard library for handling data-fetching.
+
+## Install React Query
+
+```sh
+pnpm add @tanstack/react-query
+```
+
+Next, we have to setup the `QueryClient` in our `main.tsx` (the higher the component tree, the higher the context) file:
+
+```tsx title="src/main.tsx"
+// [!code highlight]
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+async function enableMocking() {
+  if (process.env.NODE_ENV !== 'development') {
+    return;
+  }
+
+  const { worker } = await import('./mocks/browser');
+
+  return worker.start();
+}
+
+// [!code highlight]
+const queryClient = new QueryClient();
+
+enableMocking().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      // [!code highlight]
+      <QueryClientProvider client={queryClient}>
+        <App />
+        // [!code highlight]
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+});
+```
+
+## Query and Mutation
+
+We can now use `useQuery` and `useMutation` hooks to fetch and mutate data.
+
+### useQuery
+
+Let us log the result of the `useQuery` hook in the `App` component.
+
+```tsx title="src/App.tsx"
+// [!code highlight]
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import './App.css';
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  // [!code highlight:6]
+  const { data } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+
+  console.log(data);
+
+  const [profile, setProfile] = useState<ProfileType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    fetchProfile().then((data) => {
+      setProfile(data);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const handleSave = (formData: ProfileType) => {
+    setIsLoading(true);
+    saveProfile(formData).then((savedData) => {
+      setProfile(savedData);
+      setEditMode(false);
+      setIsLoading(false);
+    });
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "age": 30,
+  "companyName": "OpenAI"
+}
+```
+
+So, your query works as expected. But we still have to worry about the errors, loading state, etc. But `useQuery` handles all of that for us.
+
+```tsx title="src/App.tsx"
+import { useQuery } from '@tanstack/react-query';
+// [!code highlight]
+import { useState } from 'react';
+import './App.css';
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  // [!code highlight:8]
+  const {
+    data: profile,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+
+  const [editMode, setEditMode] = useState(false);
+
+  const handleSave = (formData: ProfileType) => {
+    // setIsLoading(true);
+    // saveProfile(formData).then((savedData) => {
+    //   setProfile(savedData);
+    //   setEditMode(false);
+    //   setIsLoading(false);
+    // });
+  };
+
+  // [!code highlight:5]
+  if (isLoading) return <p>Loading profile...</p>;
+
+  if (!profile) return <p>No profile found</p>;
+
+  if (isError) return <p>Error loading profile</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+For now, we also comment out the handler for the `handleSave` function to avoid any TS errors.
+
+Fetching is handled by the `useQuery` hook. What about the update? We can use the `useMutation` hook to handle the update.
+
+### useMutation
+
+```tsx title="src/App.tsx"
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import './App.css';
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  const [editMode, setEditMode] = useState(false);
+  const {
+    data: profile,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+
+  // [!code highlight:6]
+  const { mutate, isPending } = useMutation({
+    mutationFn: saveProfile,
+    onSuccess: () => {
+      setEditMode(false);
+    },
+  });
+
+  // [!code highlight:5]
+  const handleSave = (formData: ProfileType) => {
+    if (isPending) return;
+
+    mutate(formData);
+  };
+
+  if (isLoading) return <p>Loading profile...</p>;
+
+  if (!profile) return <p>No profile found</p>;
+
+  if (isError) return <p>Error loading profile</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+But there is a problem, our data is not updated in the UI. But the network request is successful. This is after the mutation, we have to let `queryClient` know that the data has been update and it needs to be refetched. That is what the `queryKey` is for.
+
+```tsx title="src/App.tsx"
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import './App.css';
+import { fetchProfile, saveProfile } from './features/profile/api';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+
+function App() {
+  // [!code highlight]
+  const queryClient = useQueryClient();
+  const [editMode, setEditMode] = useState(false);
+  const {
+    data: profile,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: saveProfile,
+    onSuccess: () => {
+      setEditMode(false);
+      // [!code highlight]
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+
+  const handleSave = (formData: ProfileType) => {
+    if (isPending) return;
+
+    mutate(formData);
+  };
+
+  if (isLoading) return <p>Loading profile...</p>;
+
+  if (!profile) return <p>No profile found</p>;
+
+  if (isError) return <p>Error loading profile</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+<Callout type="error">
+  Remember to keep the query keys unique. Using the same key for different
+  queries can cause unexpected behavior.
+</Callout>
+
+## Separating Concerns
+
+We can further separate the UI from the business logic.
+
+We will move the `useQuery` and `useMutation` hooks to the `features/profile` folder. We will create new files called `use-profile.ts` and `use-update-profile-mutation.ts` in the `features/profile` folder. These will hold the custom hooks for fetching and updating the profile.
+
+```ts title="src/features/profile/use-profile.ts"
+import { useQuery } from '@tanstack/react-query';
+import { fetchProfile } from './api';
+
+export default function useProfile() {
+  return useQuery({
+    queryKey: ['profile'],
+    queryFn: fetchProfile,
+  });
+}
+```
+
+```ts title="src/features/profile/use-update-profile-mutation.ts"
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { saveProfile } from './api';
+
+export default function useUpdateProfileMutation({
+  onSuccess,
+}: {
+  onSuccess?: () => void;
+}) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: saveProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      onSuccess?.();
+    },
+  });
+}
+```
+
+Now we can import them into `App.tsx`
+
+```tsx title="src/App.tsx"
+import { useState } from 'react';
+import './App.css';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import type { ProfileType } from './features/profile/types';
+// [!code highlight:2]
+import useProfile from './features/profile/use-profile';
+import useUpdateProfileMutation from './features/profile/use-update-profile-mutation';
+
+function App() {
+  const [editMode, setEditMode] = useState(false);
+  // [!code highlight:6]
+  const { data: profile, isLoading, isError } = useProfile();
+  const { mutate, isPending } = useUpdateProfileMutation({
+    onSuccess: () => {
+      setEditMode(false);
+    },
+  });
+
+  const handleSave = (formData: ProfileType) => {
+    if (isPending) return;
+
+    mutate(formData);
+  };
+
+  if (isLoading) return <p>Loading profile...</p>;
+
+  if (!profile) return <p>No profile found</p>;
+
+  if (isError) return <p>Error loading profile</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <ProfileForm initialFormData={profile} handleSave={handleSave} />
+        ) : (
+          <ProfileDisplay profile={profile} setEditMode={setEditMode} />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+## More Clean Code
+
+Our `handleSave` and the respective mutation does not need to be in the `App` component, we can move it to the `ProfileForm` component.
+
+```tsx title="src/features/profile/profile-form.tsx"
+import { useState } from 'react';
+import type { ProfileType } from './types';
+// [!code highlight]
+import useUpdateProfileMutation from './use-update-profile-mutation';
+
+export default function ProfileForm({
+  initialFormData,
+  // [!code highlight]
+  onSave,
+}: {
+  initialFormData: ProfileType;
+  // [!code highlight]
+  onSave: () => void;
+}) {
+  // [!code highlight:5]
+  const { mutate, isPending } = useUpdateProfileMutation({
+    onSuccess: () => {
+      onSave();
+    },
+  });
+
+  const [formData, setFormData] = useState<ProfileType>({
+    ...initialFormData,
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // [!code highlight:5]
+  const handleSave = (formData: ProfileType) => {
+    if (isPending) return;
+
+    mutate(formData);
+  };
+
+  return (
+    <div className="profile-form">
+      <label htmlFor="firstName">First Name:</label>
+      <input
+        type="text"
+        id="firstName"
+        name="firstName"
+        value={formData.firstName}
+        onChange={handleChange}
+      />
+      <label htmlFor="lastName">Last Name:</label>
+      <input
+        type="text"
+        id="lastName"
+        name="lastName"
+        value={formData.lastName}
+        onChange={handleChange}
+      />
+      <label htmlFor="age">Age:</label>
+      <input
+        type="number"
+        id="age"
+        name="age"
+        value={formData.age}
+        onChange={handleChange}
+      />
+      <label htmlFor="companyName">Company:</label>
+      <input
+        type="text"
+        id="companyName"
+        name="companyName"
+        value={formData.companyName}
+        onChange={handleChange}
+      />
+      // [!code highlight]
+      <button disabled={isPending} onClick={() => handleSave(formData)}>
+        Save
+      </button>
+    </div>
+  );
+}
+```
+
+We also set the `disabled` attribute on the `Save` button based on the `isPending` state.
+
+```tsx title="src/App.tsx"
+import { useState } from 'react';
+import './App.css';
+import ProfileDisplay from './features/profile/profile-display';
+import ProfileForm from './features/profile/profile-form';
+import useProfile from './features/profile/use-profile';
+
+function App() {
+  const [editMode, setEditMode] = useState(false);
+  const { data: profile, isLoading, isError } = useProfile();
+
+  if (isLoading) return <p>Loading profile...</p>;
+
+  if (!profile) return <p>No profile found</p>;
+
+  if (isError) return <p>Error loading profile</p>;
+
+  // [!code highlight:7]
+  const onSave = () => {
+    setEditMode(false);
+  };
+
+  const onEnableEditMode = () => {
+    setEditMode(true);
+  };
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          // [!code highlight]
+          <ProfileForm initialFormData={profile} onSave={onSave} />
+        ) : (
+          <ProfileDisplay
+            profile={profile}
+            // [!code highlight]
+            onEnableEditMode={onEnableEditMode}
+          />
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+We update the `ProfileDisplay` component to use the `onEnableEditMode` prop to limit the access to the edit mode.
+
+```tsx title="src/features/profile/profile-display.tsx"
+import type { ProfileType } from './types';
+
+export default function ProfileDisplay({
+  profile,
+  // [!code highlight]
+  onEnableEditMode,
+}: {
+  profile: ProfileType;
+  // [!code highlight]
+  onEnableEditMode: () => void;
+}) {
+  return (
+    <div className="profile-display">
+      <p>
+        <strong>First Name:</strong> {profile.firstName}
+      </p>
+      <p>
+        <strong>Last Name:</strong> {profile.lastName}
+      </p>
+      <p>
+        <strong>Age:</strong> {profile.age}
+      </p>
+      <p>
+        <strong>Company:</strong> {profile.companyName}
+      </p>
+      // [!code highlight]
+      <button onClick={onEnableEditMode}>Edit Profile</button>
+    </div>
+  );
+}
+```
+
+## One final refactor
+
+The form currently does not use a `form`. Let us also do some quick client side validation before saving the data.
+
+```tsx title="src/features/profile/profile-form.tsx"
+import { useState } from 'react';
+import type { ProfileType } from './types';
+import useUpdateProfileMutation from './use-update-profile-mutation';
+
+export default function ProfileForm({
+  initialFormData,
+  onSave,
+}: {
+  initialFormData: ProfileType;
+  onSave: () => void;
+}) {
+  const { mutate, isPending } = useUpdateProfileMutation({
+    onSuccess: () => {
+      onSave();
+    },
+  });
+
+  const [formData, setFormData] = useState<ProfileType>({
+    ...initialFormData,
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // [!code highlight:2]
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    mutate(formData);
+  };
+
+  return (
+    // [!code highlight]
+    <form onSubmit={handleSave} className="profile-form">
+      <label htmlFor="firstName">First Name:</label>
+      <input
+        type="text"
+        id="firstName"
+        name="firstName"
+        // [!code highlight]
+        required
+        value={formData.firstName}
+        onChange={handleChange}
+      />
+      <label htmlFor="lastName">Last Name:</label>
+      <input
+        type="text"
+        id="lastName"
+        name="lastName"
+        // [!code highlight]
+        required
+        value={formData.lastName}
+        onChange={handleChange}
+      />
+      <label htmlFor="age">Age:</label>
+      <input
+        type="number"
+        id="age"
+        name="age"
+        // [!code highlight]
+        required
+        value={formData.age}
+        onChange={handleChange}
+      />
+      // [!code highlight]
+      <label htmlFor="companyName">Company (Optional):</label>
+      <input
+        type="text"
+        id="companyName"
+        name="companyName"
+        value={formData.companyName}
+        onChange={handleChange}
+      />
+      // [!code highlight]
+      <button disabled={isPending} type="submit">
+        Save
+      </button>
+      // [!code highlight]
+    </form>
+  );
+}
+```
