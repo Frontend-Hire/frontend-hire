@@ -1,0 +1,334 @@
+---
+title: Problem
+description: Where can you encounter this problem?
+---
+
+## Starter Code
+
+The starter code for this series is [here](https://github.com/Frontend-Hire/refactoring-profile-page).
+
+This is a common problem in **many codebases**. The problem is essentially the tight coupling of the UI and business logic.
+
+Here is the file with the problem:
+
+```tsx title="src/App.tsx"
+import { useEffect, useState } from 'react';
+import './App.css';
+
+type Profile = {
+  firstName: string;
+  lastName: string;
+  age: number;
+  companyName: string;
+};
+
+function App() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<Profile>({
+    firstName: '',
+    lastName: '',
+    age: 0,
+    companyName: '',
+  });
+
+  useEffect(() => {
+    setTimeout(() => {
+      const fakeData: Profile = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = () => {
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        {editMode ? (
+          <div className="profile-form">
+            <label>
+              First Name:
+              <input
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Last Name:
+              <input
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Age:
+              <input
+                name="age"
+                type="number"
+                value={formData.age}
+                onChange={handleChange}
+              />
+            </label>
+            <label>
+              Company Name:
+              <input
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+              />
+            </label>
+            <button onClick={handleSave}>Save</button>
+          </div>
+        ) : (
+          <div className="profile-display">
+            <p>
+              <strong>First Name:</strong> {profile.firstName}
+            </p>
+            <p>
+              <strong>Last Name:</strong> {profile.lastName}
+            </p>
+            <p>
+              <strong>Age:</strong> {profile.age}
+            </p>
+            <p>
+              <strong>Company:</strong> {profile.companyName}
+            </p>
+            <button onClick={() => setEditMode(true)}>Edit Profile</button>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+export default App;
+```
+
+<Callout>
+  This was **indeed** a real problem one of our community members encountered.
+  We replicated the issue for a larger audience.
+</Callout>
+
+Depending on your experience, you might find **several** problems here. Here are the problems we found:
+
+### 1. Conditional Rendering
+
+```tsx title="src/App.tsx"
+// Some of the code has been omitted for brevity
+
+function App() {
+  // Some of the code has been omitted for brevity
+
+  // [!code highlight]
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  return (
+    <main>
+      <section className="section">
+        <h1>Profile Page</h1>
+        // [!code highlight:54]
+        {editMode ? (
+          <div className="profile-form">// ... (form content)</div>
+        ) : (
+          <div className="profile-display">// ... (display content)</div>
+        )}
+      </section>
+    </main>
+  );
+}
+
+// Some of the code has been omitted for brevity
+```
+
+- The check for `!profile || isLoading` is a common pattern. However, it currently renders the same loading message for both conditions, potentially missing a distinct state for an empty profile (e.g., if the API returns no data after loading).
+- Although conditional rendering is necessary to display different UI elements, the amount of code within the conditional blocks can make the component difficult to read.
+
+### 2. useEffect
+
+<Callout type="warn">
+  React's `useEffect` is **one of the deadliest hooks** for a codebase in our
+  opinion. It should be avoided **whenever possible**. From our experience, **a
+  significant percentage** of bugs are caused by `useEffect`.
+</Callout>
+
+```tsx title="src/App.tsx"
+// Some of the code has been omitted for brevity
+
+function App() {
+  // Some of the code has been omitted for brevity
+
+  // [!code highlight:13]
+  useEffect(() => {
+    setTimeout(() => {
+      const fakeData: Profile = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  // Some of the code has been omitted for brevity
+}
+
+// Some of the code has been omitted for brevity
+```
+
+- The `useEffect` here is necessary for fetching initial data (in this case, from our fake API). However, it should still be abstracted out of the component as it adds business logic directly to the UI component.
+
+### 3. Missing state and state updates that can go out of sync
+
+```tsx title="src/App.tsx"
+// Some of the code has been omitted for brevity
+
+function App() {
+  // [!code highlight:9]
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState<Profile>({
+    firstName: '',
+    lastName: '',
+    age: 0,
+    companyName: '',
+  });
+
+  useEffect(() => {
+    setTimeout(() => {
+      const fakeData: Profile = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      // [!code highlight:3]
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = () => {
+    setTimeout(() => {
+      // [!code highlight]
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  if (!profile || isLoading) return <p>Loading profile...</p>;
+
+  // Some of the code has been omitted for brevity
+}
+
+// Some of the code has been omitted for brevity
+```
+
+- The `formData` state can go out of sync with the `profile` state.
+- The `isLoading` state can go out of sync with the `profile` state.
+- There is no `error` state.
+- These issues are quite common when working with API calls and data fetching.
+
+### 4. Bad Fake APIs
+
+```tsx title="src/App.tsx"
+// Some of the code has been omitted for brevity
+
+function App() {
+  // Some of the code has been omitted for brevity
+
+  useEffect(() => {
+    // [!code highlight:11]
+    setTimeout(() => {
+      const fakeData: Profile = {
+        firstName: 'John',
+        lastName: 'Doe',
+        age: 30,
+        companyName: 'OpenAI',
+      };
+      setProfile(fakeData);
+      setFormData(fakeData);
+      setIsLoading(false);
+    }, 1000);
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSave = () => {
+    // [!code highlight:4]
+    setTimeout(() => {
+      setProfile(formData);
+      setEditMode(false);
+    }, 1000);
+  };
+
+  // Some of the code has been omitted for brevity
+}
+
+// Some of the code has been omitted for brevity
+```
+
+- The fake API implementation is simplistic and does not accurately represent a real API.
+- `setTimeout` can also result in memory leaks if not handled properly (e.g., if the component unmounts before the timeout completes, a cleanup function would be needed).
+- When real APIs are introduced, this simplistic mock can lead to increased frontend development and testing time because the mock didn't accurately reflect API behavior.
+
+## So, what are the solutions?
+
+In the next few chapters, we will refactor the code using some of the best practices to make it more maintainable.
+
+<Callout type="warn">
+  We will try our best to keep the chapters short and simple, but refactoring
+  always involves a lot of going back and forth.
+</Callout>
+
+Roughly speaking, we will:
+
+- Separate out the UI from the business logic.
+- Bring in Mock Service Worker (MSW) for mocking API calls.
+- Use React Query for fetching and mutating data.
+
+<Callout>
+  We recommend you attempt the refactoring yourself before reading the next
+  chapter. Then come back and read the next chapters to learn more.
+</Callout>

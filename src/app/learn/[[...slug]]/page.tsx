@@ -8,6 +8,7 @@ import {
 import { notFound } from 'next/navigation';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { getMDXComponents } from '@/mdx-components';
+import { getGithubLastEdit } from 'fumadocs-core/server';
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
@@ -18,8 +19,21 @@ export default async function Page(props: {
 
   const MDXContent = page.data.body;
 
+  const time =
+    process.env.NODE_ENV === 'development'
+      ? null
+      : await getGithubLastEdit({
+          owner: 'Frontend-Hire',
+          repo: 'frontend-hire',
+          path: `content/learn/${page.file.path}`,
+        });
+
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
+    <DocsPage
+      toc={page.data.toc}
+      full={page.data.full}
+      lastUpdate={time ? new Date(time) : undefined}
+    >
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
