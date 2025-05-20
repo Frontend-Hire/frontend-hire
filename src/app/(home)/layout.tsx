@@ -9,7 +9,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       {children}
       <footer className="container mx-auto px-4 py-2 text-center text-sm">
         <span className="text-muted-foreground text-sm">
-          Frontend Hire is an open-source platform and a community driven by{' '}
+          Frontend Hire is an open-source learning platform and a community
+          driven by{' '}
           <Link
             target="_blank"
             className="text-foreground underline underline-offset-2"

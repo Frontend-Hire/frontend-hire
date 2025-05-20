@@ -16,7 +16,7 @@ export const metadata = createMetadata({
     default: 'Frontend Hire',
   },
   description:
-    'Learn frontend and product Skills while working on practical stuff and get hired or build your own product',
+    'Learn frontend and product skills while working on practical stuff and get hired or build your own product',
   metadataBase: baseUrl,
 });
 

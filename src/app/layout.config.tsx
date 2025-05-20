@@ -42,6 +42,11 @@ export const baseOptions: BaseLayoutProps = {
       url: '/blog',
     },
     {
+      type: 'main',
+      text: 'Analytics',
+      url: '/analytics',
+    },
+    {
       type: 'icon',
       label: 'LinkedIn',
       icon: (
