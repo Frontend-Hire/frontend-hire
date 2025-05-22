@@ -7,6 +7,8 @@
     "---Introduction---",
     "index",
     "about-frontend-hire",
+    "---Features---",
+    "features/banner",
     "---Refactoring---",
     "refactoring/profile-page",
     "---System Design---",

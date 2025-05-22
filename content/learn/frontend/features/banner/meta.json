@@ -1,0 +1,5 @@
+{
+  "title": "Banner",
+  "description": "Build a banner component that can be used to display important messages to the user.",
+  "pages": ["overview", "component-api", "banner-code", "summary"]
+}
