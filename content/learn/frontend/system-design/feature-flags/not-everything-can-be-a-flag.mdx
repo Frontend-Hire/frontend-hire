@@ -1,0 +1,56 @@
+---
+title: Not Everything Should Be a Flag
+description: Understand the scenarios where feature flags can introduce more complexity than they solve, and explore alternative approaches.
+---
+
+Feature flags are incredibly powerful tools for managing change, testing, and progressive delivery. It can be tempting, once you discover their benefits, to think, "Let's put a flag on everything!" However, like any powerful tool, they can be misused or overused, leading to a system that's harder, not easier, to manage.
+
+The core purpose of most feature flags is to manage transitional states or experimental variations of features. They are not always the best solution for permanent conditional logic or fundamental system characteristics.
+
+## When to Pause and Consider Alternatives:
+
+Here are some situations where a feature flag might not be the optimal solution, or should be used with extreme caution:
+
+1. **User Permissions and Authorization:**
+
+   - **Example:** Whether a user is an "admin" or a "viewer."
+   - **Why not?** This is the domain of dedicated Identity and Access Management (IAM) or role-based access control (RBAC) systems. These systems are designed for security, auditability, and managing granular permissions. Using feature flags here can bypass established security models and create vulnerabilities.
+
+   <Callout>
+     You *might* use a feature flag to roll out a *new permission system*
+     itself, but not to manage the individual permissions long-term.
+   </Callout>
+
+2. **Long-Lived, Stable Configuration:**
+
+   - **Example:** The base URL of a critical, unchanging third-party API your system depends on.
+   - **Why not?** If a piece of configuration is stable, rarely changes, and doesn't require dynamic user-specific toggling, a simple environment variable or a static configuration file is often cleaner and more performant. Feature flags add an unnecessary layer of indirection and potential evaluation overhead.
+
+3. **Security-Critical Logic:**
+
+   - **Example:** The core encryption algorithm used for sensitive data.
+   - **Why not?** Such decisions should be deliberate, well-vetted, and not easily changed at runtime by a flag that could be accidentally misconfigured. Changes here usually require significant security review.
+
+4. **Replacing Good Design with Toggles:**
+
+   - **Example:** Having dozens of flags to control minor stylistic variations on a single page because the underlying component structure is inflexible.
+   - **Why not?** This can lead to "flag hell" – a proliferation of flags that make the codebase incredibly hard to reason about and test. Sometimes, the need for many flags points to an underlying design issue that needs refactoring for better modularity or composition.
+
+## Consequences of Over-Flagging:
+
+- **Increased Complexity ("Flag Hell"):** Code becomes littered with `if (isFlagEnabled(...))` statements, making it difficult to follow logic.
+- **Testing Burden:** The number of possible flag combinations can explode, making comprehensive testing nearly impossible.
+- **Performance Degradation:** Evaluating numerous flags, especially if they involve complex rules or external lookups, can impact performance.
+- **Stale Flags:** Forgotten flags can become technical debt, obscuring code and potentially causing unexpected behavior if accidentally toggled later.
+
+## Guiding Principle: Temporary vs. Permanent
+
+Ask yourself:
+
+> Is this a **temporary** variation or transition I need to manage (e.g., a new feature rollout, an A/B test, a migration), or is this a **permanent, fundamental characteristic** or a user-specific entitlement?
+
+If it's the latter, a feature flag might not be the best tool.
+
+## Conclusion
+
+Feature flags are a means to an end – safer, more flexible software delivery. Don't let them become an end in themselves. Use them judiciously where they provide clear value in managing change and experimentation. For more permanent or security-sensitive conditional logic, rely on dedicated systems like configuration management, authorization services, or solid architectural design.
