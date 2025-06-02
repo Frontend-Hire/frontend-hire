@@ -1,14 +1,16 @@
+import { ADVERTISEMENTS, ContentOverviewKeyType } from '@/advertisements';
+import PageAdvertisement from '@/features/advertise/page-advertisement';
 import { source } from '@/lib/source';
+import { getMDXComponents } from '@/mdx-components';
+import { getGithubLastEdit } from 'fumadocs-core/server';
+import { createRelativeLink } from 'fumadocs-ui/mdx';
 import {
-  DocsPage,
   DocsBody,
   DocsDescription,
+  DocsPage,
   DocsTitle,
 } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
-import { createRelativeLink } from 'fumadocs-ui/mdx';
-import { getMDXComponents } from '@/mdx-components';
-import { getGithubLastEdit } from 'fumadocs-core/server';
 
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
@@ -16,6 +18,8 @@ export default async function Page(props: {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
+
+  console.log(page.url);
 
   const MDXContent = page.data.body;
 
@@ -27,6 +31,8 @@ export default async function Page(props: {
           repo: 'frontend-hire',
           path: `content/learn/${page.file.path}`,
         });
+
+  const advertisementKey = page.slugs.join('-') as ContentOverviewKeyType;
 
   return (
     <DocsPage
@@ -43,6 +49,13 @@ export default async function Page(props: {
             a: createRelativeLink(source, page),
           })}
         />
+        {page.slugs.at(-1) === 'overview' && (
+          <PageAdvertisement
+            advertisement={
+              ADVERTISEMENTS.CONTENT_OVERVIEW_PAGES[advertisementKey]
+            }
+          />
+        )}
       </DocsBody>
     </DocsPage>
   );

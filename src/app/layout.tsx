@@ -1,5 +1,5 @@
+import TopBannerAdvertisement from '@/features/advertise/top-banner-advertisement';
 import { baseUrl, createMetadata } from '@/lib/metadata';
-import { Banner } from 'fumadocs-ui/components/banner';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
@@ -29,9 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         src="https://plausible.io/js/script.js"
       ></Script>
       <body className="flex min-h-screen flex-col">
-        <Banner variant="rainbow" id="launch">
-          We revamped our site to better serve our users!
-        </Banner>
+        <TopBannerAdvertisement />
         <RootProvider>{children}</RootProvider>
       </body>
     </html>

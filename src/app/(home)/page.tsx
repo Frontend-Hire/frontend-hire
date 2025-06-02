@@ -1,4 +1,5 @@
-import { Callout } from 'fumadocs-ui/components/callout';
+import { ADVERTISEMENTS } from '@/advertisements';
+import PageAdvertisement from '@/features/advertise/page-advertisement';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 import Link from 'next/link';
 
@@ -23,25 +24,9 @@ export default function HomePage() {
             Learn Now
           </Link>
         </div>
-
-        <Callout
-          className="max-w-xl"
-          title="Resume Kit for Frontend Developers"
-        >
-          <p>
-            <Link
-              className="underline"
-              href="https://topmate.io/iamyhr/1336239"
-              target="_blank"
-            >
-              Get our frontend developer resume kit
-            </Link>{' '}
-            that is built on top of the courses here on the platform. It
-            includes 7 resume templates and instructions on how to best share
-            the resume with others. Do note that you have to pay a small fee for
-            the access.
-          </p>
-        </Callout>
+        <div className="w-full max-w-xl">
+          <PageAdvertisement advertisement={ADVERTISEMENTS.HOME_PAGE} />
+        </div>
       </section>
     </main>
   );
