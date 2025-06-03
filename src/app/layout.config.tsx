@@ -43,8 +43,8 @@ export const baseOptions: BaseLayoutProps = {
     },
     {
       type: 'main',
-      text: 'Analytics',
-      url: '/analytics',
+      text: 'Advertise',
+      url: '/advertise-with-us',
     },
     {
       type: 'icon',
