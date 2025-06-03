@@ -1,31 +1,23 @@
+export type PageAdvertisementType = {
+  id: string;
+  title: string;
+  content: string;
+  cta: {
+    url: string;
+    text: string;
+  };
+  type: 'HOME_PAGE' | 'CONTENT_OVERVIEW_PAGE';
+};
+
 export type AdvertisementType = {
   TOP_BANNER: {
     id: string;
     content: string;
-    cta: {
-      url: string;
-      text: string;
-    };
+    url: string;
   };
-  HOME_PAGE: {
-    id: string;
-    title: string;
-    content: string;
-    cta: {
-      url: string;
-      text: string;
-    };
-  };
+  HOME_PAGE: PageAdvertisementType;
   CONTENT_OVERVIEW_PAGES: {
-    [key in ContentOverviewKeyType]?: {
-      id: string;
-      title: string;
-      content: string;
-      cta: {
-        url: string;
-        text: string;
-      };
-    };
+    [key in ContentOverviewKeyType]?: PageAdvertisementType;
   };
 };
 
@@ -41,11 +33,8 @@ export type ContentOverviewKeyType =
 export const ADVERTISEMENTS: AdvertisementType = {
   TOP_BANNER: {
     id: 'FH_SHADCN_UI',
-    content: 'We made a video new video on Shadcn UI!',
-    cta: {
-      text: 'Watch Now',
-      url: 'https://youtu.be/9-Gci8_6Dss',
-    },
+    content: 'We made a video new video on Shadcn UI. Check it out!',
+    url: 'https://youtu.be/9-Gci8_6Dss',
   },
   HOME_PAGE: {
     id: 'FH_RESUME_KIT',
@@ -58,6 +47,7 @@ export const ADVERTISEMENTS: AdvertisementType = {
       url: 'https://topmate.io/iamyhr/1336239',
       text: 'Get the resume kit!',
     },
+    type: 'HOME_PAGE',
   },
   CONTENT_OVERVIEW_PAGES: {
     'frontend-courses-todo-app-react-overview': {
@@ -71,6 +61,7 @@ export const ADVERTISEMENTS: AdvertisementType = {
         url: 'https://topmate.io/iamyhr/1336239',
         text: 'Get the resume kit!',
       },
+      type: 'CONTENT_OVERVIEW_PAGE',
     },
   },
 };

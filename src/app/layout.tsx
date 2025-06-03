@@ -1,3 +1,4 @@
+import { ADVERTISEMENTS } from '@/advertisements';
 import TopBannerAdvertisement from '@/features/advertise/top-banner-advertisement';
 import { baseUrl, createMetadata } from '@/lib/metadata';
 import { RootProvider } from 'fumadocs-ui/provider';
@@ -29,7 +30,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         src="https://plausible.io/js/script.js"
       ></Script>
       <body className="flex min-h-screen flex-col">
-        <TopBannerAdvertisement />
+        <TopBannerAdvertisement advertisement={ADVERTISEMENTS.TOP_BANNER} />
         <RootProvider>{children}</RootProvider>
       </body>
     </html>
