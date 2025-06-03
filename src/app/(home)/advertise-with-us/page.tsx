@@ -90,9 +90,11 @@ export default function AdvertisePage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold">Home Page Spotlight</h3>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600">$100</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {ADVERTISEMENTS_CONSTRAINTS.HOME_PAGE.price}
+                  </div>
                   <div className="text-fd-muted-foreground text-sm">
-                    2 weeks
+                    {ADVERTISEMENTS_CONSTRAINTS.HOME_PAGE.duration}
                   </div>
                 </div>
               </div>
@@ -112,7 +114,7 @@ export default function AdvertisePage() {
                   Maximum visibility
                 </span>
                 <span className="rounded-full bg-orange-100 px-3 py-1 text-orange-700">
-                  4-week duration
+                  Long duration
                 </span>
               </div>
               <CTA />
@@ -144,9 +146,11 @@ export default function AdvertisePage() {
                   Content Overview Pages
                 </h3>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600">$50</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {ADVERTISEMENTS_CONSTRAINTS.CONTENT_OVERVIEW_PAGE.price}
+                  </div>
                   <div className="text-fd-muted-foreground text-sm">
-                    2 weeks
+                    {ADVERTISEMENTS_CONSTRAINTS.CONTENT_OVERVIEW_PAGE.duration}
                   </div>
                 </div>
               </div>
@@ -205,9 +209,11 @@ export default function AdvertisePage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold">Top Banner</h3>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600">$50</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {ADVERTISEMENTS_CONSTRAINTS.TOP_BANNER.price}
+                  </div>
                   <div className="text-fd-muted-foreground text-sm">
-                    2 weeks
+                    {ADVERTISEMENTS_CONSTRAINTS.TOP_BANNER.duration}
                   </div>
                 </div>
               </div>
