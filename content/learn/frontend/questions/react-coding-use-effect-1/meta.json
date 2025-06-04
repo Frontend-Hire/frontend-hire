@@ -1,0 +1,5 @@
+{
+  "title": "React Hooks: useEffect - 1",
+  "description": "The useEffect hook is notorious to cause majority of bugs in most React projects. Can you solve a similar bug?",
+  "pages": ["overview", "solution"]
+}

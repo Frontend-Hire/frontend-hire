@@ -1,0 +1,5 @@
+{
+  "title": "React TypeScript: Migrate useState - 1",
+  "description": "Remember our question \"Hooks: useState - 1\" but that was in JavaScript. Try to migrate it to TypeScript.",
+  "pages": ["overview", "solution"]
+}

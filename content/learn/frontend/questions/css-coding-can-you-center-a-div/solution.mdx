@@ -25,7 +25,7 @@ We will solve this question with both regular CSS and Tailwind CSS.
 
 Depending on how confident you are, you might write something like this:
 
-```html title="index.html" {10-12}
+```html title="index.html"
 <!doctype html>
 <html>
   <head>
@@ -35,6 +35,7 @@ Depending on how confident you are, you might write something like this:
   </head>
 
   <body>
+    <!-- [!code highlight:3] -->
     <div class="relative-box">
       <div class="center">Center Me</div>
     </div>
@@ -44,7 +45,8 @@ Depending on how confident you are, you might write something like this:
 
 And the following CSS:
 
-```css title="styles.css" ins={1-11}
+```css title="styles.css"
+/* [!code ++:11] */
 .relative-box {
   position: relative;
 }
@@ -61,10 +63,10 @@ Except it will only center the div horizontally. What is missing? The height on 
 
 So, then you would immediately add a height of `100vh` on the parent div.
 
-```css title="styles.css" ins={3}
+```css title="styles.css"
 .relative-box {
   position: relative;
-  height: 100vh;
+  height: 100vh; /* [!code ++] */
 }
 ```
 
@@ -72,15 +74,15 @@ Alright, the `div` seems to be centered but here comes the tricky part. Why is t
 
 The issue is evident when you add background colors to the divs.
 
-```css title="styles.css" ins={2, 8}
+```css title="styles.css"
 .relative-box {
-  background-color: blue;
+  background-color: blue; /* [!code ++] */
   position: relative;
   height: 100vh;
 }
 
 .center {
-  background-color: red;
+  background-color: red; /* [!code ++] */
   position: absolute;
   top: 50%;
   left: 50%;
@@ -94,7 +96,8 @@ This is where we need to bring in a CSS reset or normalize.
 
 A very minimal CSS reset would be something like this:
 
-```css title="styles.css" ins={1-4}
+```css title="styles.css"
+/* [!code ++:4] */
 * {
   margin: 0;
   padding: 0;
@@ -119,12 +122,13 @@ Now the `div` is really centered with no side effects. Next, let us try the Flex
 
 We will preserve the CSS reset used above. Our `index.html` file would also remain the same as the previous solution.
 
-```css title="styles.css" ins={6-15}
+```css title="styles.css"
 * {
   margin: 0;
   padding: 0;
 }
 
+/* [!code ++:10] */
 .relative-box {
   height: 100vh;
 }
@@ -150,13 +154,14 @@ Let us try the same solution of `Absolute Positioning` with Tailwind CSS.
 
 We need to bring in the Tailwind CSS CDN first.
 
-```html title="index.html" ins={7}
+```html title="index.html"
 <!doctype html>
 <html>
   <head>
     <title>Parcel Sandbox</title>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="/styles.css" />
+    <!-- [!code ++] -->
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
 
@@ -168,7 +173,7 @@ We need to bring in the Tailwind CSS CDN first.
 
 Then we again wrap the `div` to be centered in another `div`. Then add the respective Tailwind CSS classes.
 
-```html title="index.html" {11-15}
+```html title="index.html"
 <!doctype html>
 <html>
   <head>
@@ -179,6 +184,7 @@ Then we again wrap the `div` to be centered in another `div`. Then add the respe
   </head>
 
   <body>
+    <!-- [!code highlight:5] -->
     <div class="relative h-screen">
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         Center Me
@@ -194,7 +200,7 @@ But wait this time, there is no vertical scroll bar and we did not apply any res
 
 Now, we will try the same solution of `Flexbox` with Tailwind CSS.
 
-```html title="index.html" {11-14}
+```html title="index.html"
 <!doctype html>
 <html>
   <head>
@@ -205,6 +211,7 @@ Now, we will try the same solution of `Flexbox` with Tailwind CSS.
   </head>
 
   <body>
+    <!-- [!code highlight:3] -->
     <div class="h-screen">
       <div class="flex h-full items-center justify-center">Center Me</div>
     </div>
