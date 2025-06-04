@@ -1,5 +1,9 @@
+export type AdvertisementSourceType = 'fh' | 'advertisement' | 'affiliate';
+
+export type AdvertisementIdType = `${AdvertisementSourceType}-${string}`;
+
 export type PageAdvertisementType = {
-  id: string;
+  id: AdvertisementIdType;
   title: string;
   content: string;
   cta: {
@@ -11,7 +15,7 @@ export type PageAdvertisementType = {
 
 export type AdvertisementType = {
   TOP_BANNER: {
-    id: string;
+    id: AdvertisementIdType;
     content: string;
     url: string;
   };
@@ -32,26 +36,24 @@ export type ContentOverviewKeyType =
 
 export const ADVERTISEMENTS: AdvertisementType = {
   TOP_BANNER: {
-    id: 'FH_SHADCN_UI',
+    id: 'fh-shadcn-ui',
     content: 'We made a video new video on Shadcn UI. Check it out!',
     url: 'https://youtu.be/9-Gci8_6Dss',
   },
   HOME_PAGE: {
-    id: 'FH_RESUME_KIT',
-    title: 'Resume Kit for Frontend Developers',
-    content: `We have a resume kit that is built on top of the courses here on the
-        platform. It includes 7 resume templates and instructions on how to best
-        share the resume with others. Do note that you have to pay a small fee
-        for the access.`,
+    id: 'affiliate-interview-ready-ai-engineering',
+    title: 'AI Engineering for Developers',
+    content:
+      "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
     cta: {
-      url: 'https://topmate.io/iamyhr/1336239',
-      text: 'Get the resume kit!',
+      url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+      text: 'Checkout the course!',
     },
     type: 'HOME_PAGE',
   },
   CONTENT_OVERVIEW_PAGES: {
     'frontend-courses-todo-app-react-overview': {
-      id: 'FH_RESUME_KIT',
+      id: 'fh-resume-kit',
       title: 'Resume Kit for Frontend Developers',
       content: `We have a resume kit that is built on top of the courses here on the
         platform. It includes 7 resume templates and instructions on how to best

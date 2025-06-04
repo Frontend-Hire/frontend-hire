@@ -14,7 +14,7 @@ export default function PageAdvertisement({
   if (!advertisement) {
     return (
       <Callout
-        id="FH_ADVERTISE_HERE"
+        id="fh-advertisement"
         icon={<MegaphoneIcon />}
         className="relative w-full border-s-fuchsia-500/90"
         title="Promote your product or service here"
@@ -36,7 +36,7 @@ export default function PageAdvertisement({
           </Link>
         </div>
         <div className="absolute top-1 right-1">
-          <IsExternalAdvertisementBadge id="FH_ADVERTISE_HERE" />
+          <IsExternalAdvertisementBadge id="fh-advertisement" />
         </div>
       </Callout>
     );
