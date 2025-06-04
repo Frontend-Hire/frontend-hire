@@ -16,6 +16,9 @@
     "courses/stackpack",
     "courses/login-register-flow",
     "courses/todo-app-svelte",
-    "courses/dynamic-pricing-page"
+    "courses/dynamic-pricing-page",
+    "---Questions---",
+    "questions/css-coding-can-you-center-a-div",
+    "questions/js-coding-polyfil-array-at"
   ]
 }

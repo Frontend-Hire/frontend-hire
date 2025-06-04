@@ -1,0 +1,213 @@
+---
+title: Solution
+description: How to center a div?
+---
+
+<VideoEmbed
+  id="7xdEAxysc9E"
+  title="Can you center a div? | CSS Coding | Easy Practice Question | Frontend Hire"
+/>
+
+<Callout>
+  This is our founder's favorite question to ask in an interview with an intern
+  or a fresh graduate. Though it might seem simple, the answer to this question
+  can tell a lot about your CSS fundamentals.
+</Callout>
+
+There are various ways to solve this problem. But two of the most common ones are:
+
+- Using Absolute positioning
+- Using Flexbox
+
+We will solve this question with both regular CSS and Tailwind CSS.
+
+## Absolute positioning (Regular CSS)
+
+Depending on how confident you are, you might write something like this:
+
+```html title="index.html" {10-12}
+<!doctype html>
+<html>
+  <head>
+    <title>Parcel Sandbox</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+
+  <body>
+    <div class="relative-box">
+      <div class="center">Center Me</div>
+    </div>
+  </body>
+</html>
+```
+
+And the following CSS:
+
+```css title="styles.css" ins={1-11}
+.relative-box {
+  position: relative;
+}
+
+.center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+Except it will only center the div horizontally. What is missing? The height on the parent div.
+
+So, then you would immediately add a height of `100vh` on the parent div.
+
+```css title="styles.css" ins={3}
+.relative-box {
+  position: relative;
+  height: 100vh;
+}
+```
+
+Alright, the `div` seems to be centered but here comes the tricky part. Why is there a vertical scroll bar now?
+
+The issue is evident when you add background colors to the divs.
+
+```css title="styles.css" ins={2, 8}
+.relative-box {
+  background-color: blue;
+  position: relative;
+  height: 100vh;
+}
+
+.center {
+  background-color: red;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+Did you notice it? There seems to be some kind of margin on the `body` element (inspect it with browser tools).
+
+This is where we need to bring in a CSS reset or normalize.
+
+A very minimal CSS reset would be something like this:
+
+```css title="styles.css" ins={1-4}
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.relative-box {
+  position: relative;
+  height: 100vh;
+}
+
+.center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+Now the `div` is really centered with no side effects. Next, let us try the Flexbox solution.
+
+## Flexbox (Regular CSS)
+
+We will preserve the CSS reset used above. Our `index.html` file would also remain the same as the previous solution.
+
+```css title="styles.css" ins={6-15}
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.relative-box {
+  height: 100vh;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+```
+
+How is this different from the previous solution? Put up some background colors and you will see the difference. Now, the height of the centered `div` is 100% of the parent div. Whereas with absolute positioning, the height of the centered `div` was just the height of the text.
+
+<Callout>
+  You would seldom center something horizontally and vertically across the
+  entire screen. In most cases, you work with a smaller height.
+</Callout>
+
+## Absolute positioning (TailwindCSS)
+
+Let us try the same solution of `Absolute Positioning` with Tailwind CSS.
+
+We need to bring in the Tailwind CSS CDN first.
+
+```html title="index.html" ins={7}
+<!doctype html>
+<html>
+  <head>
+    <title>Parcel Sandbox</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body>
+    <div>Center Me</div>
+  </body>
+</html>
+```
+
+Then we again wrap the `div` to be centered in another `div`. Then add the respective Tailwind CSS classes.
+
+```html title="index.html" {11-15}
+<!doctype html>
+<html>
+  <head>
+    <title>Parcel Sandbox</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body>
+    <div class="relative h-screen">
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        Center Me
+      </div>
+    </div>
+  </body>
+</html>
+```
+
+But wait this time, there is no vertical scroll bar and we did not apply any reset or normalize. Why? Technically, the Tailwind CSS CDN already includes a CSS normalization. So, we are good.
+
+## Flexbox (TailwindCSS)
+
+Now, we will try the same solution of `Flexbox` with Tailwind CSS.
+
+```html title="index.html" {11-14}
+<!doctype html>
+<html>
+  <head>
+    <title>Parcel Sandbox</title>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body>
+    <div class="h-screen">
+      <div class="flex h-full items-center justify-center">Center Me</div>
+    </div>
+  </body>
+</html>
+```

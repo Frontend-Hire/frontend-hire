@@ -1,0 +1,52 @@
+---
+title: Overview
+description: 'JS Polyfill: Array.at() Method'
+---
+
+<Callout title="Questions are deprecated!" type="error">
+  These are the interview practice questions from the legacy versions of
+  Frontend Hire. Only the ones with a video solution are available. Moving
+  forward, we won't be releasing more questions as this is not our strongest
+  content.
+</Callout>
+
+<iframe
+  src="https://stackblitz.com/edit/vitest-dev-vitest-es9dui?ctl=1&embed=1&file=src%2Findex.js&theme=dark"
+  width="100%"
+  height="600"
+></iframe>
+
+<Callout title="Fork on Stackblitz">
+  Click on the "Fork" button on the bottom-left corner of the editor to fork the
+  code on Stackblitz and to solve this question in a separate browser tab.
+</Callout>
+
+## Question
+
+> Back to the future! - Array edition.
+
+Polyfills are a way to add functionality to the JavaScript language by implementing methods that are not natively supported. This is useful for older browsers that do not support newer features of the language. Also, they are interview questions that are commonly asked in JavaScript interviews. In this exercise, you will implement a polyfill for the Array.at() method.
+
+## Objectives
+
+- Implement a polyfill for the Array.at() method.
+- The method should work for both positive and negative integers.
+- It should return `undefined` for out-of-bound indices.
+
+## Tests
+
+Consider writing tests for the following scenarios:
+
+- The method returns the correct item for a positive index.
+- The method returns the correct item for a negative index.
+- The method returns `undefined` for an index that is out of the array's bounds.
+
+You can also do a TDD approach to this problem if you prefer.
+
+## Resources to Refer
+
+- [ECMAScript Language Specification: Array.prototype.at](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-array.prototype.atv)
+- [MDN Web Docs: Array.at()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at)
+- [What is a Polyfill?](https://remysharp.com/2010/10/08/what-is-a-polyfill)
+- [JavaScript Info: Polyfills and transpilers](https://javascript.info/polyfills)
+- [Using Web Platform Tests to Write and Test Polyfills](https://www.oddbird.net/2023/05/01/web-platform-tests-polyfills/)
