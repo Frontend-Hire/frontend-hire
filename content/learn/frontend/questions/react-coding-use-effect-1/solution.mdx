@@ -1,0 +1,124 @@
+---
+title: Solution
+description: Fix the useEffect bug
+---
+
+<VideoEmbed
+  id="s9pZ0CZO49A"
+  title="Hooks: useEffect-1 | React Coding | Easy Practice Question | Frontend Hire"
+/>
+
+The bug is evident whenever we reset the timer. But it also can be noticed when the timer is left to run for a few seconds.
+
+The `seconds` state variable is set inside a `setInterval` which itself is inside a `useEffect`.
+
+The current `useEffect` runs every time the `seconds` state variable changes and the `setInterval` is not being cleared resulting in a memory leak.
+
+We can fix this bug with a simple `useEffect` cleanup function.
+
+```js title="App.jsx"
+React.useEffect(() => {
+  const interval = setInterval(() => {
+    setSeconds(seconds + 1);
+  }, 1000);
+
+  // [!code ++:3]
+  return () => {
+    clearInterval(interval);
+  };
+}, [seconds]);
+```
+
+<Callout>
+  Did you know that instead of clearInterval you can also use clearTimeout? Both
+  of them share [the same pool of
+  IDs](https://developer.mozilla.org/en-US/docs/Web/API/clearInterval). But for
+  readability, we should use the respective clear functions.
+</Callout>
+
+Though the bug is fixed, we prefer a different way to set the state which allows us to not pass the `seconds` value to the `useEffect` dependency array. `setSeconds` can take [an updater function](https://react.dev/reference/react/useState#updating-state-based-on-the-previous-state)
+
+```js title="App.jsx"
+React.useEffect(() => {
+  const interval = setInterval(() => {
+    // [!code --]
+    setSeconds(seconds + 1);
+    // [!code ++]
+    setSeconds(seconds => seconds + 1);
+  }, 1000);
+
+  return () => {
+    clearInterval(interval);
+  };
+  // [!code --]
+}, [seconds]);
+// [!code ++]
+}, []);
+```
+
+### Bonus
+
+Creating a `useTimer` hook is a great way to abstract away the timer logic.
+
+```js title="useTimer.jsx"
+import React from 'react';
+
+export default function useTimer() {
+  const [seconds, setSeconds] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((seconds) => seconds + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  const resetTimer = () => {
+    setSeconds(0);
+  };
+
+  return { seconds, resetTimer };
+}
+```
+
+All we had to do was extract the `useState` and `useEffect` logic into the `useTimer` hook. The `useTimer` hook returns an object containing the `seconds` state and a `resetTimer` function which we use back in the `App` component.
+
+```js title="App.jsx"
+// [!code ++]
+import useTimer from './useTimer';
+
+export default function App() {
+  const [seconds, setSeconds] = React.useState(0);
+
+  // [!code --:10]
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((seconds) => seconds + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+  // [!code ++]
+  const { seconds, resetTimer } = useTimer();
+
+  return (
+    <div className="p-4 text-center">
+      <p>Timer: {seconds} Seconds</p>
+      <button
+        className="rounded bg-red-500 p-2 hover:bg-red-600"
+        // [!code --]
+        onClick={() => setSeconds(0)}
+        // [!code ++]
+        onClick={resetTimer}
+      >
+        Reset Timer
+      </button>
+    </div>
+  );
+}
+```

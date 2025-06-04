@@ -1,0 +1,103 @@
+---
+title: Solution
+description: Use the useState hook
+---
+
+<VideoEmbed
+  id="_NjbGj_82FY"
+  title="Hooks: useState-1 | React Coding | Easy Practice Question | Frontend Hire"
+/>
+
+This is the stuff that you would do a lot in a CRUD application.
+
+First, we will update the `tasks` variable to use state, which in React is done with the `useState` hook.
+
+`useState` returns an array with two items:
+
+1. The current value of the state
+2. A function to update the state
+
+```js title="App.jsx"
+// [!code --]
+const tasks = [{ id: 1, taskName: 'First Task' }];
+// [!code ++]
+const [tasks, setTasks] = React.useState([{ id: 1, taskName: 'First Task' }]);
+```
+
+Next, we will wire up the `addTask` function:
+
+```js title="App.jsx"
+const addTask = (task) => {
+  // [!code --]
+  // Write the logic
+  // [!code ++:12]
+  const trimmedTask = task.trim();
+
+  if (!trimmedTask) {
+    return;
+  }
+
+  const newTask = {
+    id: Math.random().toString(36).substr(2, 9),
+    taskName: trimmedTask,
+  };
+
+  setTasks([...tasks, newTask]);
+};
+```
+
+We check if the task is empty before we add it. If it is empty, we do not add the task and return. Otherwise, we create a new task object with a unique ID and the trimmed task name.
+
+<Callout type='warn'>
+Unique IDs are usually created by a database. This random string method works for an interview setting, but do let the interviewer know that this is not the best way to generate unique IDs.
+
+But why do we need to have a unique ID? Why not just use the index as the ID? Well, we can use the index as the ID if we want. But that would not help React understand which item in the list is being changed.
+
+</Callout>
+
+Then we use the `setTasks` function to update the `tasks` state with the new task. We use the spread operator to create a new array with the new task added.
+
+Finally, we can wire up the `deleteTask` function:
+
+```js title="App.jsx"
+const deleteTask = (id) => {
+  // [!code --]
+  // Write the logic
+  // [!code ++]
+  setTasks(tasks.filter((task) => task.id !== id));
+};
+```
+
+We filter the `tasks` array to remove the task with the matching ID and create a new array without the deleted task. Then we use the `setTasks` function to update the `tasks` state with the new array.
+
+<Callout type='error'>
+If you are new to React, you might be tempted to **push** or **splice** on the array. Never do that in React with state variables.
+
+One of the fundamental rules of React is to not modify the state directly. Always work with a copy of the state.
+
+</Callout>
+
+### Bonus Task
+
+How do we add a `clear all` tasks feature?
+
+```js title="App.jsx"
+// [!code ++:3]
+const clearAllTasks = () => {
+  setTasks([]);
+};
+```
+
+We use the `setTasks` function to update the `tasks` state with an empty array to clear all tasks.
+
+Next, we just have to link the function to a UI element. We will create a button that calls the `clearAllTasks` function with some basic styling.
+
+```js title="App.jsx"
+// [!code ++:6]
+<button
+  onClick={clearAllTasks}
+  className="border border-red-500 bg-red-500 p-2 text-white"
+>
+  Clear All
+</button>
+```

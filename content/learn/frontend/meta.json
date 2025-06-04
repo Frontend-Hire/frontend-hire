@@ -16,6 +16,13 @@
     "courses/stackpack",
     "courses/login-register-flow",
     "courses/todo-app-svelte",
-    "courses/dynamic-pricing-page"
+    "courses/dynamic-pricing-page",
+    "---Questions---",
+    "questions/css-coding-can-you-center-a-div",
+    "questions/js-coding-polyfill-array-at",
+    "questions/react-theory-what-is-react",
+    "questions/react-coding-use-state-1",
+    "questions/react-coding-use-effect-1",
+    "questions/react-coding-ts-use-state-1"
   ]
 }
