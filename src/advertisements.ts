@@ -53,15 +53,79 @@ export const ADVERTISEMENTS: AdvertisementType = {
   },
   CONTENT_OVERVIEW_PAGES: {
     'frontend-courses-todo-app-react-overview': {
-      id: 'fh-resume-kit',
-      title: 'Resume Kit for Frontend Developers',
-      content: `We have a resume kit that is built on top of the courses here on the
-        platform. It includes 7 resume templates and instructions on how to best
-        share the resume with others. Do note that you have to pay a small fee
-        for the access.`,
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
       cta: {
-        url: 'https://topmate.io/iamyhr/1336239',
-        text: 'Get the resume kit!',
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-courses-todo-app-svelte-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-courses-stackpack-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-courses-login-register-flow-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-refactoring-profile-page-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-system-design-dynamic-pricing-page-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-courses-dynamic-pricing-page-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
       },
       type: 'CONTENT_OVERVIEW_PAGE',
     },
