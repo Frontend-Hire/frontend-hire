@@ -1,4 +1,5 @@
 import { ADVERTISEMENTS, ContentOverviewKeyType } from '@/advertisements';
+import GFEAdvertisement from '@/features/advertise/gfe-advertisement';
 import PageAdvertisement from '@/features/advertise/page-advertisement';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
@@ -18,8 +19,6 @@ export default async function Page(props: {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
-
-  console.log(page.url);
 
   const MDXContent = page.data.body;
 
@@ -43,6 +42,7 @@ export default async function Page(props: {
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
+        {page.slugs.includes('questions') && <GFEAdvertisement />}
         <MDXContent
           components={getMDXComponents({
             // this allows you to link to other pages with relative file paths
@@ -56,6 +56,7 @@ export default async function Page(props: {
             }
           />
         )}
+        {page.slugs.includes('questions') && <GFEAdvertisement />}
       </DocsBody>
     </DocsPage>
   );
