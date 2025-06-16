@@ -3,5 +3,10 @@
   "description": "Learn Product Skills",
   "icon": "Wrench",
   "root": true,
-  "pages": ["---Introduction---", "index"]
+  "pages": [
+    "---Introduction---",
+    "index",
+    "---Fundamentals---",
+    "...fundamentals"
+  ]
 }
