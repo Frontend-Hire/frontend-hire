@@ -1,0 +1,26 @@
+---
+title: Types
+description: Learn about the different types of feature flags
+---
+
+## Boolean Flags (On/Off):
+
+- Simplest form.
+- Use cases: Kill switch, simple feature enable/disable.
+
+## Multivariate Flags:
+
+- Return a string, number, JSON, etc.
+- Use cases: A/B testing UI variations, different API endpoints, configuration values.
+- Example: `{"buttonColor": "blue", "textSize": "16px"}` vs `{"buttonColor": "green", "textSize": "18px"}`
+
+## Percentage Rollouts:
+
+- Gradually expose a feature to a percentage of users.
+- How stickiness is achieved (user ID hashing).
+
+## Targeting Rules / Segmentation:
+
+- Based on user attributes (e.g., user_id, email_domain, subscription_tier, beta_tester_list).
+- Based on request context (e.g., country, device_type, app_version).
+- Combining rules (e.g., 10% of users in 'Germany' on 'iOS').
