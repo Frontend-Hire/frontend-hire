@@ -37,7 +37,7 @@ export type ContentOverviewKeyType =
 export const ADVERTISEMENTS: AdvertisementType = {
   TOP_BANNER: {
     id: 'fh-shadcn-ui',
-    content: 'We made a video new video on Shadcn UI. Check it out!',
+    content: 'We made a new video on Shadcn UI. Check it out!',
     url: 'https://youtu.be/9-Gci8_6Dss',
   },
   HOME_PAGE: {
