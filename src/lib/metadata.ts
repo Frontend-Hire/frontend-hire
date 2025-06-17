@@ -25,4 +25,4 @@ export function createMetadata(override: Metadata): Metadata {
 export const baseUrl =
   process.env.NODE_ENV === 'development' || !process.env.URL
     ? new URL('http://localhost:3000')
-    : new URL(`https://${process.env.URL}`);
+    : new URL(process.env.URL);
