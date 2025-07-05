@@ -64,10 +64,11 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const page = source.getPage([slug]);
+  const page = blog.getPage([slug]);
+
   if (!page) notFound();
 
-  const image = ['/docs-og', slug, 'image.png'].join('/');
+  const image = ['/blog-og', slug, 'image.png'].join('/');
   return createMetadata({
     title: page.data.title,
     description: page.data.description,
