@@ -4,7 +4,6 @@ import { getMDXComponents } from '@/mdx-components';
 import { InlineTOC } from 'fumadocs-ui/components/inline-toc';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Control } from './page.client';
@@ -59,17 +58,27 @@ export default async function Page(props: {
   );
 }
 
-export async function generateMetadata(props: {
+export async function generateMetadata({
+  params,
+}: {
   params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const params = await props.params;
-  const page = blog.getPage([params.slug]);
+}) {
+  const { slug } = await params;
+  const page = blog.getPage([slug]);
 
   if (!page) notFound();
 
+  const image = ['/blog-og', slug, 'image.png'].join('/');
   return createMetadata({
     title: page.data.title,
-    description: page.data.description ?? 'Learn Frontend and Product Skills',
+    description: page.data.description,
+    openGraph: {
+      images: image,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      images: image,
+    },
   });
 }
 

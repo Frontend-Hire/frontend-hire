@@ -7,7 +7,7 @@ export function createMetadata(override: Metadata): Metadata {
       title: override.title ?? undefined,
       description: override.description ?? undefined,
       url: 'https://www.frontendhire.com/',
-      images: '/social-image.png',
+      images: '/banner.png',
       siteName: 'Frontend Hire',
       ...override.openGraph,
     },
@@ -16,7 +16,7 @@ export function createMetadata(override: Metadata): Metadata {
       creator: '@thisisyhr',
       title: override.title ?? undefined,
       description: override.description ?? undefined,
-      images: '/social-image.png',
+      images: '/banner.png',
       ...override.twitter,
     },
   };

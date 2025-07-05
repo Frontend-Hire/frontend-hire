@@ -1,6 +1,7 @@
 import { ADVERTISEMENTS, ContentOverviewKeyType } from '@/advertisements';
 import GFEAdvertisement from '@/features/advertise/gfe-advertisement';
 import PageAdvertisement from '@/features/advertise/page-advertisement';
+import { createMetadata } from '@/lib/metadata';
 import { source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 import { getGithubLastEdit } from 'fumadocs-core/server';
@@ -66,15 +67,25 @@ export async function generateStaticParams() {
   return source.generateParams();
 }
 
-export async function generateMetadata(props: {
+export async function generateMetadata({
+  params,
+}: {
   params: Promise<{ slug?: string[] }>;
 }) {
-  const params = await props.params;
-  const page = source.getPage(params.slug);
+  const { slug = [] } = await params;
+  const page = source.getPage(slug);
   if (!page) notFound();
 
-  return {
+  const image = ['/docs-og', ...slug, 'image.png'].join('/');
+  return createMetadata({
     title: page.data.title,
     description: page.data.description,
-  };
+    openGraph: {
+      images: image,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      images: image,
+    },
+  });
 }
