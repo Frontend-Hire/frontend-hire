@@ -61,10 +61,10 @@ export default async function Page(props: {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string[] }>;
+  params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const page = source.getPage(slug);
+  const page = source.getPage([slug]);
   if (!page) notFound();
 
   const image = ['/docs-og', slug, 'image.png'].join('/');
