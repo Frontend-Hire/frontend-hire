@@ -1,0 +1,149 @@
+---
+title: Homebrew
+description: Quick write-up about Homebrew
+---
+
+<Callout title="AI-powered write-up, verify yourself!" type="warning">
+  This is one of those things, most developers (including me) just install and
+  use without thinking about it. So, just doing quick-AI write-up to learn it.
+</Callout>
+
+## What is Homebrew?
+
+[Homebrew](https://brew.sh/) is a package manager for macOS (and Linux) that lets you easily install software from the command line. Think of it like an app store for your terminal - instead of downloading software from websites, extracting files, and manually installing them, you can just type something like `brew install python` and Homebrew handles all the downloading, installing, and setting up for you.
+
+The name comes from the idea of "brewing" your own software setup, and it's become the standard way most Mac developers manage their development tools.
+
+## Is Homebrew pre-installed on macOS?
+
+No, Homebrew is not pre-installed on macOS. You need to install it yourself using this command in Terminal:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+## How do I check if Homebrew is installed?
+
+Run this command in Terminal:
+
+```bash
+brew --version
+```
+
+If it shows a version number, Homebrew is installed and working.
+
+## Basic Homebrew Commands
+
+- `brew install [package]` - Install a package
+- `brew uninstall [package]` - Remove a package
+- `brew update` - Update Homebrew itself
+- `brew upgrade` - Update all installed packages
+- `brew upgrade [package]` - Update a specific package
+- `brew list` - Show all installed packages
+- `brew search [term]` - Search for available packages
+- `brew info [package]` - Get detailed information about a package
+- `brew doctor` - Check for common issues and problems
+
+## What's the difference between `brew install` and `brew install --cask`?
+
+- `brew install [package]` - Installs command-line tools and libraries (like git, python, node)
+- `brew install --cask [package]` - Installs GUI applications (like Chrome, VS Code, Slack)
+
+For example:
+
+- `brew install git` - Installs the Git command-line tool
+- `brew install --cask google-chrome` - Installs Google Chrome browser
+
+## Where does Homebrew install packages?
+
+Homebrew installs packages in `/opt/homebrew` on Apple Silicon Macs (M1/M2) and `/usr/local` on Intel Macs. It creates symbolic links in `/opt/homebrew/bin` or `/usr/local/bin` so you can use the commands from anywhere.
+
+## How do I update Homebrew and my packages?
+
+1. Update Homebrew itself: `brew update`
+2. Update all installed packages: `brew upgrade`
+3. Update a specific package: `brew upgrade [package]`
+
+It's good practice to run `brew update` before installing new packages to ensure you have the latest package information.
+
+## How do I uninstall Homebrew completely?
+
+Run this command in Terminal:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+```
+
+## What should I do if I get permission errors?
+
+Never use `sudo` with Homebrew commands. If you're getting permission errors:
+
+1. Make sure you own the Homebrew directories: `sudo chown -R $(whoami) /opt/homebrew` (or `/usr/local` on Intel Macs)
+2. Run `brew doctor` to diagnose issues
+3. If problems persist, consider reinstalling Homebrew
+
+## How do I see what packages I have installed?
+
+- `brew list` - Show all installed packages
+- `brew list --cask` - Show only GUI applications (casks)
+- `brew deps [package]` - Show dependencies for a specific package
+
+## Can I install a specific version of a package?
+
+Homebrew typically only maintains the latest version of packages. For older versions, you might need to:
+
+- Use version managers (like `nvm` for Node.js, `pyenv` for Python)
+- Install from source
+- Use Homebrew's versioned formulas when available (like `python@3.9`)
+
+## What's a Homebrew formula vs. a cask?
+
+- **Formula**: Recipe for installing command-line tools and libraries
+- **Cask**: Extension for installing GUI applications
+
+## How do I troubleshoot Homebrew issues?
+
+1. Run `brew doctor` - This checks for common problems
+2. Run `brew update` - Ensures you have the latest package information
+3. Check the Homebrew GitHub issues page
+4. Look at the installation logs for specific error messages
+
+## Common Homebrew Commands Cheat Sheet
+
+```bash
+# Installation
+brew install [package]
+brew install --cask [app]
+
+# Information
+brew search [term]
+brew info [package]
+brew list
+brew deps [package]
+
+# Maintenance
+brew update
+brew upgrade
+brew upgrade [package]
+brew cleanup
+
+# Troubleshooting
+brew doctor
+brew config
+```
+
+## Best Practices
+
+- Run `brew update` regularly to keep package information current
+- Use `brew upgrade` periodically to update installed packages
+- Run `brew cleanup` occasionally to remove old versions and free up space
+- Use `brew doctor` if you encounter any issues
+- Don't use `sudo` with Homebrew commands
+- Keep your macOS up to date for best compatibility
+
+## Getting Help
+
+- `brew help` - Shows general help
+- `brew help [command]` - Shows help for a specific command
+- Visit [brew.sh](https://brew.sh) for official documentation
+- Check the [Homebrew GitHub repository](https://github.com/Homebrew/brew) for issues and discussions

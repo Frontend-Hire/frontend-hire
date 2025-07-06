@@ -1,0 +1,307 @@
+---
+title: Node.js and Version Managers
+description: Learn how to install and use Node.js version managers, including NVM and FNM.
+---
+
+<Callout title="AI-powered write-up, verify yourself!" type="warning">
+  This is one of those things, most developers (including me) just install and
+  use without thinking about it. So, just doing quick-AI write-up to learn it.
+</Callout>
+
+## What is Node.js?
+
+Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine. It allows you to run JavaScript on your computer (outside of a web browser) and is commonly used for building web servers, APIs, command-line tools, and desktop applications.
+
+## Why do I need a Node.js version manager?
+
+Different projects often require different versions of Node.js. Some older projects might need Node.js 14, while newer ones might require Node.js 18 or 20. A version manager lets you:
+
+- Install multiple Node.js versions on the same machine
+- Switch between versions easily for different projects
+- Avoid conflicts between project requirements
+- Keep your global Node.js installation clean
+
+## What are NVM and FNM?
+
+**NVM (Node Version Manager)** - The original and most popular Node.js version manager
+
+- Written in bash
+- Works on macOS, Linux, and Windows (via WSL)
+- Mature and well-documented
+
+**FNM (Fast Node Manager)** - A faster, modern alternative to NVM
+
+- Written in Rust
+- Significantly faster than NVM
+- Cross-platform (macOS, Linux, Windows)
+- Simpler codebase
+
+## Installing NVM
+
+### macOS/Linux
+
+```bash
+# Install via curl
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Or via wget
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Reload your shell
+source ~/.bashrc
+# or
+source ~/.zshrc
+```
+
+### Windows
+
+Use [nvm-windows](https://github.com/coreybutler/nvm-windows) - download the installer from the GitHub releases page.
+
+## Installing FNM
+
+### macOS (via Homebrew)
+
+```bash
+brew install fnm
+```
+
+### Linux/macOS (via curl)
+
+```bash
+curl -fsSL https://fnm.vercel.app/install | bash
+```
+
+### Windows (via Chocolatey)
+
+```bash
+choco install fnm
+```
+
+### Windows (via Scoop)
+
+```bash
+scoop install fnm
+```
+
+## Basic NVM Commands
+
+```bash
+# Install the latest LTS version
+nvm install --lts
+
+# Install a specific version
+nvm install 18.17.0
+
+# List installed versions
+nvm list
+
+# List available versions to install
+nvm list-remote
+
+# Switch to a version
+nvm use 18.17.0
+
+# Set a default version
+nvm alias default 18.17.0
+
+# Show current version
+nvm current
+
+# Uninstall a version
+nvm uninstall 16.14.0
+```
+
+## Basic FNM Commands
+
+```bash
+# Install the latest LTS version
+fnm install --lts
+
+# Install a specific version
+fnm install 18.17.0
+
+# List installed versions
+fnm list
+
+# List available versions to install
+fnm list-remote
+
+# Switch to a version
+fnm use 18.17.0
+
+# Set a default version
+fnm default 18.17.0
+
+# Show current version
+fnm current
+
+# Uninstall a version
+fnm uninstall 16.14.0
+```
+
+## Setting Up Shell Integration
+
+### NVM
+
+Add to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+```
+
+### FNM
+
+Add to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+# For bash
+eval "$(fnm env --use-on-cd)"
+
+# For zsh
+eval "$(fnm env --use-on-cd)"
+
+# For fish
+fnm env --use-on-cd | source
+```
+
+## Automatic Version Switching
+
+Both NVM and FNM can automatically switch Node.js versions when you enter a project directory.
+
+### Using .nvmrc files
+
+Create a `.nvmrc` file in your project root:
+
+```
+18.17.0
+```
+
+Then:
+
+- **NVM**: Run `nvm use` in the project directory
+- **FNM**: Will automatically switch if you have `--use-on-cd` enabled
+
+### Using package.json
+
+FNM can also read the `engines` field in `package.json`:
+
+```json
+{
+  "engines": {
+    "node": "18.17.0"
+  }
+}
+```
+
+## Which should I choose: NVM or FNM?
+
+### Choose NVM if:
+
+- You want the most mature and widely-used option
+- You need extensive documentation and community support
+- You're working in a team that already uses NVM
+- You need features specific to NVM
+
+### Choose FNM if:
+
+- You want faster performance (especially on Windows)
+- You prefer modern tooling
+- You want automatic version switching via `.nvmrc` files
+- You're starting fresh and want the most efficient option
+
+## Common Workflows
+
+### Setting up a new project
+
+```bash
+# Navigate to your project
+cd my-project
+
+# Create .nvmrc file
+echo "18.17.0" > .nvmrc
+
+# Install and use the specified version
+nvm install  # or fnm install
+nvm use      # or fnm use
+```
+
+### Switching between projects
+
+```bash
+# Project A (Node 16)
+cd project-a
+nvm use  # or fnm use
+
+# Project B (Node 18)
+cd project-b
+nvm use  # or fnm use
+```
+
+## Troubleshooting
+
+### Command not found after installation
+
+- Make sure you've reloaded your shell: `source ~/.bashrc` or `source ~/.zshrc`
+- Check if the installation added the necessary lines to your shell configuration
+- Try opening a new terminal window
+
+### NVM is slow on Windows
+
+- Consider using FNM instead, which is significantly faster on Windows
+- Or use nvm-windows, which is specifically designed for Windows
+
+### npm packages not found after switching versions
+
+- Each Node.js version has its own global npm packages
+- You'll need to reinstall global packages for each version
+- Consider using `npx` instead of global installs when possible
+
+### Version not switching automatically
+
+- Make sure you have shell integration set up correctly
+- For FNM, ensure you have the `--use-on-cd` flag in your shell configuration
+- Check that you have a `.nvmrc` file in your project root
+
+## Best Practices
+
+### General
+
+- Use `.nvmrc` files in your projects to specify Node.js versions
+- Keep your version manager updated
+- Use LTS (Long Term Support) versions for production projects
+- Document the required Node.js version in your project's README
+
+### Team Collaboration
+
+- Commit `.nvmrc` files to version control
+- Include Node.js version requirements in your project documentation
+- Consider using `engines` field in `package.json`
+
+### Performance
+
+- Don't install too many versions you don't need
+- Use FNM if you need better performance, especially on Windows
+- Consider using `npx` instead of global package installations
+
+## Migrating from NVM to FNM
+
+1. Note your installed versions: `nvm list`
+2. Install FNM
+3. Install needed Node.js versions with FNM
+4. Update your shell configuration to use FNM
+5. Optionally remove NVM: `rm -rf ~/.nvm`
+
+## Alternative Version Managers
+
+- **n** - Simple Node.js version manager (macOS/Linux only)
+- **volta** - JavaScript tool manager (handles Node.js, npm, yarn)
+- **asdf** - Version manager for multiple languages (with Node.js plugin)
+
+## Getting Help
+
+- **NVM**: [GitHub repository](https://github.com/nvm-sh/nvm)
+- **FNM**: [GitHub repository](https://github.com/Schniz/fnm)
+- Check the respective documentation for detailed guides
+- Use `nvm --help` or `fnm --help` for command-specific help
