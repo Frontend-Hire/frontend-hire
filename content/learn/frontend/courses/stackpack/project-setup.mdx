@@ -3,16 +3,16 @@ title: Project Setup
 description: In this guide, we will not cover the initial setup of the project. But we followed the same steps as those covered in our other course.
 ---
 
-We have created a GitHub repository with the initial setup to make it easier for you. You can fork or clone the [repository](https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript) and start working on the project. The branch should be `0-start`.
+We have created a GitHub repository with the initial setup to make it easier for you. You can fork or clone the [repository](https://github.com/Frontend-Hire/stackpack) and start working on the project. The branch should be `0-start`.
 
 ```sh
-git clone https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript.git
+git clone https://github.com/Frontend-Hire/stackpack.git
 ```
 
 Then run the following commands:
 
 ```sh
-cd stackpack-webcontainers-react-typescript
+cd stackpack
 npm install
 ```
 
@@ -20,44 +20,41 @@ If you want to do this manually, check out the project setup in the course: [Tod
 
 ## Tailwind CSS
 
-We will use Tailwind CSS to style our application. This course is not a Tailwind CSS course, so I will not cover the basics of Tailwind CSS. We recommend checking out the [official documentation](https://tailwindcss.com/docs/installation) if you are new to Tailwind CSS.
+We will use Tailwind CSS to style our application. This course is not a Tailwind CSS course, so I will not cover the basics of Tailwind CSS. We recommend checking out the [official documentation](https://tailwindcss.com) if you are new to Tailwind CSS.
 
-However, we will cover the setup and usage of Tailwind CSS for our project. The setup is straightforward, and we follow the [official documentation's install steps for Vite](https://tailwindcss.com/docs/guides/vite).
+However, we will cover the setup and usage of Tailwind CSS for our project. The setup is straightforward, and we follow the [official documentation's install steps for Vite](https://tailwindcss.com/docs/installation/using-vite).
 
 ### Installing Tailwind CSS
 
 ```sh
-npm install -D tailwindcss@3.4.1 postcss@8.4.38 autoprefixer@10.4.19
-npx tailwindcss init -p
+pnpm add tailwindcss @tailwindcss/vite
 ```
 
-This step will create a `tailwind.config.js` and a `postcss.config.js` file at the root of our project.
+Then configure the vite plugin:
 
-Next, we need to update our `tailwind.config.js` file with the following content:
+```ts title="vite.config.ts"
+// [!code ++]
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react-swc';
+import { defineConfig } from 'vite';
 
-```js title="tailwind.config.js"
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-};
+// https://vite.dev/config/
+export default defineConfig({
+  // [!code highlight]
+  plugins: [react(), tailwindcss()],
+});
 ```
 
 We must set up the Tailwind directives in our global CSS file, `src/index.css`
 
 ```css title='src/index.css'
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 ```
 
 Let us run the dev server.
 
 ```sh
-npm run dev
+pnpm dev
 ```
 
 Make a slight change in the `src/App.tsx` file to see if Tailwind CSS works.
@@ -73,7 +70,7 @@ We should see the following output in the browser.
 
 ![Tailwind CSS](./assets/1-project-setup-1.webp)
 
-### Editor Setup for Tailwind CSS
+### Editor setup for Tailwind CSS
 
 We recommend setting up a few editor extensions to make working with Tailwind CSS easier.
 
@@ -81,14 +78,14 @@ We recommend setting up a few editor extensions to make working with Tailwind CS
 
 2. [**Inline-fold**](https://marketplace.visualstudio.com/items?itemName=moalamri.inline-fold) (Optional): This extension allows you to fold the Tailwind CSS classes in your editor. This helps to avoid bloating the editor with a lot of classes.
 
-### Prettier Plugin to sort Tailwind CSS classes
+### Prettier plugin to sort Tailwind CSS classes
 
 We recommend using the [Official Prettier Plugin](https://tailwindcss.com/docs/editor-setup#automatic-class-sorting-with-prettier) to sort the Tailwind CSS classes in your editor. This plugin dramatically reduces the cognitive load of working with the classes.
 
 Install the plugin:
 
 ```sh
-npm install -D prettier-plugin-tailwindcss@0.5.12
+pnpm add -D prettier-plugin-tailwindcss
 ```
 
 Add the plugin to your `.prettierrc` file:
@@ -106,4 +103,4 @@ Add the plugin to your `.prettierrc` file:
 
 Great, this wraps up this section. We have a decent project setup to start working on our application.
 
-At this point, our code should match the code in the branch [`1-project-setup`](https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript/tree/1-project-setup).
+At this point, our code should match the code in the branch [`1-project-setup`](https://github.com/Frontend-Hire/stackpack/tree/1-project-setup).
