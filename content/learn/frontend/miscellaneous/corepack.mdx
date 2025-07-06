@@ -1,0 +1,34 @@
+---
+title: Corepack
+description: How to use Corepack
+---
+
+## What is Corepack?
+
+Corepack is a tool that comes with Node.js (v16.10+) that manages package manager versions automatically.
+
+**Purpose**: Ensures your project uses the specified package manager version (npm, yarn, pnpm) without manual installation.
+
+**How it works**:
+
+- Reads `packageManager` field in package.json
+- Downloads and uses the specified version
+- Acts as a proxy between your commands and the actual package manager
+
+**Setup**:
+
+```bash
+corepack enable
+```
+
+**Usage in package.json**:
+
+```json
+{
+  "packageManager": "pnpm@8.15.0"
+}
+```
+
+Now running `pnpm install` will automatically use pnpm v8.15.0, even if you don't have it installed.
+
+**Benefits**: Consistent package manager versions across team members and CI/CD, eliminates "works on my machine" issues.

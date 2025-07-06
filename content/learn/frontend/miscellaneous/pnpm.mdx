@@ -1,0 +1,44 @@
+---
+title: pnpm
+description: How to use pnpm
+---
+
+## What is pnpm?
+
+[pnpm](https://pnpm.io/) is a fast, disk space-efficient package manager for Node.js. It stands for "performant npm."
+
+Key features:
+
+- **Hard links and symlinks**: Stores packages once globally, then links to them in projects, saving disk space
+- **Faster installs**: Parallel downloading and smart caching
+- **Strict dependency resolution**: Prevents access to undeclared dependencies (unlike npm/yarn)
+- **Monorepo support**: Built-in workspace management
+- **Drop-in replacement**: Compatible with npm commands and package.json
+
+Common commands:
+
+- `pnpm install` - install dependencies
+- `pnpm add <package>` - add package
+- `pnpm run <script>` - run scripts
+- `pnpm dlx <package>` - run package without installing (like npx)
+
+pnpm is particularly popular for large projects and monorepos due to its speed and disk efficiency.
+
+## Installing pnpm
+
+```
+# Download and install fnm:
+curl -o- https://fnm.vercel.app/install | bash
+
+# Download and install Node.js:
+fnm install 22
+
+# Verify the Node.js version:
+node -v # Should print "v22.17.0".
+
+# Download and install pnpm:
+corepack enable pnpm
+
+# Verify pnpm version:
+pnpm -v
+```
