@@ -10,7 +10,7 @@ description: WebContainer API is what does most of the heavy lifting over here. 
 Let us install the dependency first. A single dependency is what we need.
 
 ```sh
-npm i @webcontainer/api@1.1.9
+pnpm add @webcontainer/api
 ```
 
 ## Usage
@@ -18,12 +18,13 @@ npm i @webcontainer/api@1.1.9
 First of all, due to the technology of WebContainer, we have to set up a couple of headers in our `vite.config.ts` file.
 
 ```ts title="vite.config.ts"
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   // [!code ++:6]
   server: {
     headers: {
@@ -301,4 +302,4 @@ Alright, you would see an error in the console that we caught about the multiple
 
 In the next two sections, we will see wiring up the terminal and the preview section with the WebContainer API.
 
-At this point, our code should match the code in the branch [`4-webcontainer-api`](https://github.com/Frontend-Hire/stackpack-webcontainers-react-typescript/tree/4-webcontainer-api).
+At this point, our code should match the code in the branch [`4-webcontainer-api`](https://github.com/Frontend-Hire/stackpack/tree/4-webcontainer-api).
