@@ -17,6 +17,8 @@ pnpm add @webcontainer/api
 
 First of all, due to the technology of WebContainer, we have to set up a couple of headers in our `vite.config.ts` file.
 
+### Setting up Headers
+
 ```ts title="vite.config.ts"
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react-swc';
@@ -35,6 +37,8 @@ export default defineConfig({
 });
 ```
 
+### Booting the WebContainer
+
 Let us boot the WebContainer instance in the `App` component and store it in the state.
 
 ```tsx title="src/App.tsx"
@@ -52,8 +56,8 @@ export default function App() {
 
   React.useEffect(() => {
     const createWebContainer = async () => {
-      const webContainer = await WebContainer.boot();
-      setWebContainer(webContainer);
+      const webContainerInstance = await WebContainer.boot();
+      setWebContainer(webContainerInstance);
     };
 
     createWebContainer();
@@ -62,7 +66,7 @@ export default function App() {
     // But there is an issue with the current implementation of WebContainer that prevents it from being torn down.
     // https://github.com/stackblitz/webcontainer-core/issues/1125
     // return () => {
-    //   instance?.teardown();
+    //   webContainer?.teardown();
     //   setWebContainer(null);
     // };
   }, []);
@@ -235,6 +239,67 @@ export default function CodeEditor() {
 ```
 
 Alright, you would see an error in the console that we caught about the multiple instances of WebContainer. This is a [known issue](https://github.com/stackblitz/webcontainer-core/issues/1125) with the WebContainer API. We have to wait for the issue to be resolved. But for now, we can ignore it.
+
+### Mount the filesystem to the WebContainer
+
+Our `webContainer` instance currently has no filesystem mounted to it. Let us mount the `VITE_REACT_TEMPLATE` to the `webContainer` instance.
+
+```tsx title="src/App.tsx"
+import { WebContainer } from '@webcontainer/api';
+import React from 'react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import CodeEditor from './components/code-editor';
+import { VITE_REACT_TEMPLATE } from './templates/react-vite';
+
+export default function App() {
+  const [webContainer, setWebContainer] = React.useState<WebContainer | null>(
+    null,
+  );
+
+  React.useEffect(() => {
+    const createWebContainer = async () => {
+      const webContainerInstance = await WebContainer.boot();
+      // [!code ++]
+      await webContainerInstance.mount(VITE_REACT_TEMPLATE.files);
+      setWebContainer(webContainerInstance);
+    };
+
+    createWebContainer();
+
+    // Ideally, we should clean up the WebContainer instance when the component is unmounted.
+    // But there is an issue with the current implementation of WebContainer that prevents it from being torn down.
+    // https://github.com/stackblitz/webcontainer-core/issues/1125
+    // return () => {
+    //   webContainer?.teardown();
+    //   setWebContainer(null);
+    // };
+  }, []);
+
+  return (
+    <div className="h-dvh p-2">
+      <PanelGroup direction="horizontal">
+        <Panel>
+          <PanelGroup direction="vertical">
+            <Panel>
+              <CodeEditor />
+            </Panel>
+            <PanelResizeHandle className="h-2 bg-blue-300" />
+            <Panel>
+              <div className="h-full border bg-red-100">Terminal</div>
+            </Panel>
+          </PanelGroup>
+        </Panel>
+        <PanelResizeHandle className="w-2 bg-blue-300" />
+        <Panel>
+          <div className="h-full border bg-red-100">Preview</div>
+        </Panel>
+      </PanelGroup>
+    </div>
+  );
+}
+```
+
+Great, we have now mounted the files of `VITE_REACT_TEMPLATE` to the `webContainer` instance.
 
 In the next two sections, we will see wiring up the terminal and the preview section with the WebContainer API.
 
