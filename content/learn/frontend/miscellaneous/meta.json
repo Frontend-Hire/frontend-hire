@@ -5,6 +5,7 @@
     "node-and-version-managers",
     "corepack",
     "pnpm",
+    "docker",
     "..."
   ]
 }

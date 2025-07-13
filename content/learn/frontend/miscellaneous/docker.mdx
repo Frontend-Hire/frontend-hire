@@ -1,0 +1,410 @@
+---
+title: Docker
+description: Docker essentials from a frontend developer perspective
+---
+
+<Callout title="AI-powered write-up, verify yourself!" type="warn">
+  This guide focuses on Docker from a frontend developer's perspective. Docker
+  has many advanced features not covered here.
+</Callout>
+
+## What is Docker?
+
+[Docker](https://docker.com) is a containerization platform that packages your application and its dependencies into portable containers. Think of it as a lightweight virtual machine that runs your app the same way across different environments—your laptop, staging server, and production all run identical setups.
+
+For frontend developers, Docker solves the "it works on my machine" problem by ensuring your React app, Next.js app, Node.js backend, or static site runs consistently everywhere.
+
+## Is Docker pre-installed?
+
+No, you need to install Docker Desktop from [docker.com](https://docker.com/products/docker-desktop). It includes Docker Engine, Docker CLI, and a GUI for managing containers.
+
+## How do I check if Docker is installed?
+
+```bash
+docker --version
+docker-compose --version
+```
+
+If both show version numbers, Docker is ready to use.
+
+## Basic Docker Concepts
+
+- **Image**: A blueprint for your application (like a class in programming)
+- **Container**: A running instance of an image (like an object)
+- **Dockerfile**: Recipe for building an image
+- **Docker Compose**: Tool for defining multi-container applications
+
+## Essential Docker Commands
+
+### Images
+
+- `docker build -t [name] .` - Build an image from Dockerfile
+- `docker images` - List all images
+- `docker rmi [image]` - Remove an image
+- `docker pull [image]` - Download an image from registry
+
+### Containers
+
+- `docker run [image]` - Create and start a container
+- `docker ps` - List running containers
+- `docker ps -a` - List all containers (including stopped)
+- `docker stop [container]` - Stop a running container
+- `docker rm [container]` - Remove a container
+- `docker exec -it [container] bash` - Access container shell
+
+### Useful Flags
+
+- `-d` - Run in background (detached)
+- `-p 3000:3000` - Map ports (host:container)
+- `--name [name]` - Give container a name
+- `-v $(pwd):/app` - Mount current directory to container
+
+## Dockerfile Basics for Frontend Apps
+
+### React App Example
+
+```dockerfile
+# Use Node.js base image
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the app
+RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Start the app
+CMD ["npm", "start"]
+```
+
+### Static Site with Nginx
+
+```dockerfile
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+## Docker Compose for Frontend Development
+
+Create a `docker-compose.yml` file:
+
+```yaml
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  backend:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    ports:
+      - '8000:8000'
+    command: npm run dev
+```
+
+### Docker Compose Commands
+
+- `docker-compose up` - Start all services
+- `docker-compose up -d` - Start in background
+- `docker-compose down` - Stop and remove containers
+- `docker-compose build` - Build all services
+- `docker-compose logs [service]` - View logs
+
+## Common Frontend Docker Patterns
+
+### Development with Hot Reload
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install dependencies first (better caching)
+COPY package*.json ./
+RUN npm install
+
+# Copy source after dependencies
+COPY . .
+
+EXPOSE 3000
+
+# Use development server
+CMD ["npm", "run", "dev"]
+```
+
+### Multi-stage Build for Production
+
+```dockerfile
+# Build stage
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+## Environment Variables in Docker
+
+### In Dockerfile
+
+```dockerfile
+ENV NODE_ENV=production
+ENV API_URL=https://api.example.com
+```
+
+### In docker-compose.yml
+
+```yaml
+services:
+  frontend:
+    build: .
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:8000
+```
+
+### Using .env files
+
+```yaml
+services:
+  frontend:
+    build: .
+    env_file:
+      - .env
+      - .env.development
+```
+
+## Volume Mounting for Development
+
+### Live Code Updates
+
+```bash
+docker run -p 3000:3000 -v $(pwd):/app -v /app/node_modules my-app
+```
+
+### In Docker Compose
+
+```yaml
+volumes:
+  - .:/app # Mount source code
+  - /app/node_modules # Exclude node_modules
+```
+
+## Docker Ignore File
+
+Create `.dockerignore`:
+
+```
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.DS_Store
+```
+
+## Troubleshooting Common Issues
+
+### Port Already in Use
+
+```bash
+# Find what's using port 3000
+lsof -i :3000
+
+# Use different port
+docker run -p 3001:3000 my-app
+```
+
+### Permission Issues
+
+```bash
+# Change ownership of files
+sudo chown -R $(whoami) .
+
+# Run as current user
+docker run --user $(id -u):$(id -g) my-app
+```
+
+### Container Won't Start
+
+```bash
+# Check logs
+docker logs [container-name]
+
+# Debug by running shell
+docker run -it [image] sh
+```
+
+### Build Cache Issues
+
+```bash
+# Build without cache
+docker build --no-cache -t my-app .
+
+# Clean up unused images
+docker image prune
+```
+
+## Docker for Different Frontend Frameworks
+
+### Next.js
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+### Vue.js
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=0 /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### Vite Projects
+
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+
+# Development
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--", "--host"]
+```
+
+## Docker Registry and Deployment
+
+### Push to Docker Hub
+
+```bash
+# Tag your image
+docker tag my-app username/my-app:latest
+
+# Push to registry
+docker push username/my-app:latest
+```
+
+### Pull and Run
+
+```bash
+# Pull from registry
+docker pull username/my-app:latest
+
+# Run the image
+docker run -p 3000:3000 username/my-app:latest
+```
+
+## Docker Cheat Sheet
+
+```bash
+# Build and run
+docker build -t my-app .
+docker run -p 3000:3000 my-app
+
+# Development with volumes
+docker run -p 3000:3000 -v $(pwd):/app my-app
+
+# Docker Compose
+docker-compose up -d
+docker-compose down
+docker-compose logs -f
+
+# Cleanup
+docker system prune        # Remove unused containers/images
+docker container prune     # Remove stopped containers
+docker image prune        # Remove unused images
+```
+
+## Best Practices for Frontend Docker
+
+### Dockerfile Optimization
+
+- Use multi-stage builds for smaller production images
+- Copy package.json before source code for better caching
+- Use .dockerignore to exclude unnecessary files
+- Use specific base image versions (node:18-alpine vs node:latest)
+
+### Development Workflow
+
+- Use Docker Compose for multi-service development
+- Mount source code as volumes for live reloading
+- Use environment-specific configurations
+- Keep development and production Dockerfiles separate
+
+### Security
+
+- Don't run containers as root user
+- Use official base images
+- Regularly update base images
+- Don't include secrets in images
+
+## Getting Help
+
+- `docker --help` - General Docker help
+- `docker [command] --help` - Command-specific help
+- Visit [docs.docker.com](https://docs.docker.com) for official documentation
+- Check [Docker Hub](https://hub.docker.com) for official images
