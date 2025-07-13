@@ -9,7 +9,7 @@ This library is used by almost all the terminals you see on the web, and an exam
 
 ## Setting up Xterm.js
 
-To get started with Xterm.js, we need to install it using npm.
+To get started with Xterm.js, we need to install it using pnpm.
 
 ```sh
 pnpm add @xterm/xterm
@@ -263,7 +263,7 @@ However, the terminal has an issue resizing the panel, and the commands do not w
 
 We need to use an addon for Xterm.js called `FitAddon` to resize the terminal when the panel is resized.
 
-Install the `FitAddon` using npm.
+Install the `FitAddon` using pnpm.
 
 ```sh
 pnpm add @xterm/addon-fit
@@ -538,9 +538,7 @@ Our terminal should now resize properly when the panel is resized. The terminal 
 There is a minor bug where the resize does leave little space at the bottom of the terminal. Honestly, we do not want to worry much about this bug as it is not a big issue and can be covered by a little CSS.
 
 ```css title="src/index.css"
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 /* [!code ++:3] */
 .terminal {
@@ -554,7 +552,7 @@ Great, let us just replace our ResizeObserver implementation to use a more robus
 
 ### Using `use-resize-observer` to Refit the Terminal on Resize
 
-Install the `use-resize-observer` library using npm.
+Install the `use-resize-observer` library using pnpm.
 
 ```sh
 pnpm add use-resize-observer
