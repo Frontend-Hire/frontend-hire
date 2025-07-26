@@ -304,7 +304,7 @@ export default function AdvertisePage() {
 
           <iframe
             plausible-embed="true"
-            src="https://plausible.io/share/frontendhire.com?auth=ixmgX9zqPLr5BTDX7czZa&embed=true&theme=system"
+            src="https://plausible.withyhr.com/share/frontendhire.com?auth=V7OaDJpzvKXi579sLJf6v&embed=true&theme=system"
             loading="lazy"
             style={{
               width: '1px',
@@ -314,7 +314,7 @@ export default function AdvertisePage() {
               marginTop: '1rem',
             }}
           ></iframe>
-          <Script async src="https://plausible.io/js/embed.host.js" />
+          <Script async src="https://plausible.withyhr.com/js/embed.host.js" />
         </div>
 
         <Callout type="error" title="Analytics Not Loading?">
@@ -331,7 +331,7 @@ export default function AdvertisePage() {
             <Link
               target="_blank"
               className="underline underline-offset-2"
-              href="https://plausible.io/frontendhire.com/"
+              href="https://plausible.withyhr.com/frontendhire.com/"
             >
               view the public analytics page directly
             </Link>
