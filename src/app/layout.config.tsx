@@ -37,6 +37,28 @@ export const baseOptions: BaseLayoutProps = {
   },
   links: [
     {
+      type: 'menu',
+      text: 'Learn',
+      items: [
+        {
+          text: 'Frontend',
+          description: 'Learn frontend skills',
+          url: '/learn/frontend',
+        },
+        {
+          text: 'Software Engineering Fundamentals',
+          description:
+            'Irrespective of frontend or backend, you need to learn these',
+          url: '/learn/software-engineering-fundamentals',
+        },
+        {
+          text: 'Product',
+          description: 'Learn product skills',
+          url: '/learn/product',
+        },
+      ],
+    },
+    {
       type: 'main',
       text: 'Blog',
       url: '/blog',

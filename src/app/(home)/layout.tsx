@@ -17,8 +17,8 @@ export default function Layout({ children }: { children: ReactNode }) {
             href="https://www.iamyhr.com/"
           >
             YHR
-          </Link>{' '}
-          and the contributors.
+          </Link>
+          .
         </span>
       </footer>
     </HomeLayout>
