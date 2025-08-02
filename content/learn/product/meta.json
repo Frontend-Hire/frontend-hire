@@ -1,6 +1,6 @@
 {
   "title": "Product",
-  "description": "Learn Product Skills",
+  "description": "Learn product skills",
   "icon": "Wrench",
   "root": true,
   "pages": ["---Introduction---", "index"]

@@ -16,7 +16,13 @@ export default function HomePage() {
           </h2>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <Link
+            className={buttonVariants({ color: 'secondary' })}
+            href="/learn/frontend"
+          >
+            Join Discord Community
+          </Link>
           <Link
             className={buttonVariants({ color: 'primary' })}
             href="/learn/frontend"
