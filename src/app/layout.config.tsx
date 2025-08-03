@@ -129,7 +129,7 @@ export const baseOptions: BaseLayoutProps = {
         </svg>
       ),
       text: 'GitHub',
-      url: 'https://github.com/Frontend-Hire',
+      url: 'https://github.com/yaralahruthik/frontend-hire',
     },
     {
       type: 'icon',

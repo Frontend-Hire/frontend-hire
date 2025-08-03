@@ -27,7 +27,7 @@ export default async function Page(props: {
     process.env.NODE_ENV === 'development'
       ? null
       : await getGithubLastEdit({
-          owner: 'Frontend-Hire',
+          owner: 'yaralahruthik',
           repo: 'frontend-hire',
           path: `content/learn/${page.file.path}`,
         });
