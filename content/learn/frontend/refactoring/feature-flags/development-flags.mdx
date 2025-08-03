@@ -17,4 +17,95 @@ Development flags help you hide unfinished work. A good scenario where you'll us
   reviews.
 </Callout>
 
+## Install Mantine UI Library
+
+<Callout>
+  You can run the below steps and ignore learning anything about Mantine. Just
+  understand we are using a different UI library. Feature flags have nothing to
+  do with the library you use at all!
+</Callout>
+
+So, the team decided that MUI is not the way to move forward and have agreed to use [`Mantine`](https://mantine.dev/getting-started/) instead. The first step is to migrate the `AppLayout` to use [Mantine's `AppShell`](https://mantine.dev/core/app-shell/).
+
+Let us install it now:
+
+```sh
+pnpm add @mantine/core @mantine/hooks
+```
+
+Mantine needs postcss for styling, so let us install it too:
+
+```sh
+pnpm add -D postcss postcss-preset-mantine postcss-simple-vars
+```
+
+Also, create a `postcss.config.cjs` file for the configuration.
+
+```js title="postcss.config.cjs"
+module.exports = {
+  plugins: {
+    'postcss-preset-mantine': {},
+    'postcss-simple-vars': {
+      variables: {
+        'mantine-breakpoint-xs': '36em',
+        'mantine-breakpoint-sm': '48em',
+        'mantine-breakpoint-md': '62em',
+        'mantine-breakpoint-lg': '75em',
+        'mantine-breakpoint-xl': '88em',
+      },
+    },
+  },
+};
+```
+
+We then setup Mantine's Provider:
+
+```tsx title="App.tsx"
+import AuthLayout from '@/layouts/auth-layout';
+import About from '@/pages/about';
+import Home from '@/pages/home';
+import Login from '@/pages/login';
+import Register from '@/pages/register';
+// [!code ++:2]
+import { MantineProvider } from '@mantine/core';
+import '@mantine/core/styles.css';
+import { Route, Routes } from 'react-router';
+import AppLayout from './layouts/app-layout';
+
+function App() {
+  return (
+    // [!code ++]
+    <MantineProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<Home />} />
+          <Route path="about" element={<About />} />
+        </Route>
+
+        <Route element={<AuthLayout />}>
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+        </Route>
+      </Routes>
+      // [!code ++]
+    </MantineProvider>
+  );
+}
+
+export default App;
+```
+
+<Callout title="UI libraries interfere with each other" type="warn">
+  When it comes to using multiple UI libraries in the same app, things might
+  look weird due to conflicts. These conflicts usually arise due to the default
+  global styles each UI library applies. There are ways to handle this, but for
+  this refactoring series, it is out of the scope.
+</Callout>
+
+## Migrating to Mantine's AppShell
+
+Great, now we have the neccessary setup for Mantine, and we can start using it in our app. As discussed, let us start migrating to a new `AppShell`.
+
+<Callout>Always a good idea to replace things in a bottom-up approach.</Callout>
+
 ## useDevelopmentFlag
