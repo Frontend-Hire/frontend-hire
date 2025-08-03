@@ -1,5 +1,5 @@
 {
   "title": "Feature Flags",
   "description": "Use different feature flags to ease the development or feature release process.",
-  "pages": ["overview", "summary"]
+  "pages": ["overview", "understanding-the-codebase", "summary"]
 }
