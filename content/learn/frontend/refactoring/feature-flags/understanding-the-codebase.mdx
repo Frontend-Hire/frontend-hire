@@ -1,11 +1,11 @@
 ---
-title: Understanding the codebase
-description: A quick run at the codebase to understand what we want to do!
+title: Understanding the Codebase
+description: A quick overview of the codebase to understand our objectives!
 ---
 
 ## Project Structure
 
-These are all the major files.
+These are the major files in our project. If you look at the `components` folder, you’ll notice two feature components with different naming conventions: `feature-one.tsx` and `FeatureTwo.tsx`. This is intentional, and we’ll cover this soon!
 
 <Files>
   <Folder name="src" defaultOpen>
@@ -28,3 +28,15 @@ These are all the major files.
     <File name="main.tsx" />
   </Folder>
 </Files>
+
+### Run the Project
+
+Run the project and view our UI (the YouTube video shows this):
+
+```sh
+pnpm dev
+```
+
+This is a fairly simple app with two auth pages: `Login` and `Register`, and two app pages: `Home` and `About`. They are also separated by two different layout files: `AuthLayout` and `AppLayout`.
+
+Great, go through the rest of the files at ease but in the next section, we will start building out our flags.

@@ -1,0 +1,20 @@
+---
+title: Development Flags
+description: Use this flag to hide unfinished work
+---
+
+Development flags help you hide unfinished work. A good scenario where you'll use this will be something like this:
+
+- You start using a new library for a new feature and setup a lot of config for it
+- But now the team wants to start using this library immediately
+- But you have an unfinished feature in your branch
+- Your options are to create a new branch and redo that entire setup again
+- Or hide the current unfinished work behind a development flag
+- Raise a PR and the team can maybe also use that unfinished work as a reference on how to use this library
+
+<Callout title="Don't use development flags often" type="warn">
+  We don't recommend you use this kind of flag often as it adds friction to code
+  reviews.
+</Callout>
+
+## useDevelopmentFlag
