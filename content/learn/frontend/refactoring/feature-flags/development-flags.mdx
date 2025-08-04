@@ -25,7 +25,7 @@ Development flags help you hide unfinished work. A good scenario where you'll us
   do with the library you use at all!
 </Callout>
 
-So, the team decided that MUI is not the way to move forward and have agreed to use [`Mantine`](https://mantine.dev/getting-started/) instead. The first step is to migrate the `AppLayout` to use [Mantine's `AppShell`](https://mantine.dev/core/app-shell/).
+So, the team decided that MUI is not the way to move forward and have agreed to use [`Mantine`](https://mantine.dev/getting-started/) instead. The team wants you to first refresh the `FeatureOne` to use Mantine's Design.
 
 Let us install it now:
 
@@ -102,10 +102,367 @@ export default App;
   this refactoring series, it is out of the scope.
 </Callout>
 
-## Migrating to Mantine's AppShell
+## Refreshing Feature One's Design
 
-Great, now we have the neccessary setup for Mantine, and we can start using it in our app. As discussed, let us start migrating to a new `AppShell`.
+Great, now we have the neccessary setup for Mantine, and we can start using it in our app. As discussed, let us start to refresh the `FeatureOne` design. We will replace the MUI's paper with [Mantine's Paper](https://mantine.dev/core/paper/) in `FeatureOne` to begin with.
 
-<Callout>Always a good idea to replace things in a bottom-up approach.</Callout>
+The current `FeatureOne` code looks like this:
 
-## useDevelopmentFlag
+```tsx title="src/components/feature-one.tsx"
+import BuildIcon from '@mui/icons-material/Build';
+import DescriptionIcon from '@mui/icons-material/Description';
+import FolderIcon from '@mui/icons-material/Folder';
+import {
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Typography,
+} from '@mui/material';
+
+export default function FeatureOne() {
+  return (
+    <Paper elevation={3} sx={{ p: 3, borderLeft: '5px solid #f44336' }}>
+      <Typography variant="h5" gutterBottom>
+        Old Feature One
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        This is the legacy version of Feature One with basic tools and layout.
+      </Typography>
+
+      <List>
+        <ListItem>
+          <ListItemIcon>
+            <FolderIcon color="action" />
+          </ListItemIcon>
+          <ListItemText primary="Basic data list" />
+        </ListItem>
+        <ListItem>
+          <ListItemIcon>
+            <BuildIcon color="action" />
+          </ListItemIcon>
+          <ListItemText primary="Minimal controls" />
+        </ListItem>
+        <ListItem>
+          <ListItemIcon>
+            <DescriptionIcon color="action" />
+          </ListItemIcon>
+          <ListItemText primary="Static content only" />
+        </ListItem>
+      </List>
+    </Paper>
+  );
+}
+```
+
+We start to duplicate the code to keep visual reference and start bringing in our Mantine Paper component.
+
+```tsx title="src/components/feature-one.tsx"
+import { Paper } from '@mantine/core';
+import BuildIcon from '@mui/icons-material/Build';
+import DescriptionIcon from '@mui/icons-material/Description';
+import FolderIcon from '@mui/icons-material/Folder';
+import {
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper as MUIPaper,
+  Typography,
+} from '@mui/material';
+
+export default function FeatureOne() {
+  return (
+    // [!code ++:30]
+    <>
+      <Paper shadow="xs" withBorder p="xl">
+        <Typography variant="h5" gutterBottom>
+          Old Feature One
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          This is the legacy version of Feature One with basic tools and layout.
+        </Typography>
+
+        <List>
+          <ListItem>
+            <ListItemIcon>
+              <FolderIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Basic data list" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <BuildIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Minimal controls" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <DescriptionIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Static content only" />
+          </ListItem>
+        </List>
+      </Paper>
+      {/* USING THIS AS VISUAL REFERENCE TILL THE FULL MIGRATION IS COMPLETE */}
+      <MUIPaper elevation={3} sx={{ p: 3, borderLeft: '5px solid #f44336' }}>
+        <Typography variant="h5" gutterBottom>
+          Old Feature One
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          This is the legacy version of Feature One with basic tools and layout.
+        </Typography>
+
+        <List>
+          <ListItem>
+            <ListItemIcon>
+              <FolderIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Basic data list" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <BuildIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Minimal controls" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <DescriptionIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Static content only" />
+          </ListItem>
+        </List>
+      </MUIPaper>
+      // [!code ++]
+    </>
+  );
+}
+```
+
+Great, it looks like Mantine's paper works well. You decide to continue working on the other parts but now all of a sudden a high priority request has come in and the team needs to push a `FeatureThree` immediately due to a client request and they want it to use the new Mantine based UI.
+
+## useDevelopmentFlag and DevelopmentFlag
+
+<Callout type="warn">
+  We tried to come up with the simplest example for this course, you'd have to
+  understand that you might have to approach such a situation differently. There
+  are other ways to preserve this work for example cherry picking some of your
+  commits.
+</Callout>
+
+Now, all of your setup is in this branch and you don't want to redo this work just to create another branch. Again, assume you did a lot more work than what we just did above.
+
+One quick solution that we have now is using a development flag to hide the unfinished work.
+
+```tsx title="src/components/feature-one.tsx"
+import { Paper } from '@mantine/core';
+import BuildIcon from '@mui/icons-material/Build';
+import DescriptionIcon from '@mui/icons-material/Description';
+import FolderIcon from '@mui/icons-material/Folder';
+import {
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper as MUIPaper,
+  Typography,
+} from '@mui/material';
+
+// [!code ++:3]
+function useDevelopmentFlag() {
+  return process.env.NODE_ENV === 'development';
+}
+
+export default function FeatureOne() {
+  const isDev = useDevelopmentFlag(); // [!code ++]
+
+  return (
+    <>
+      // [!code ++]
+      {isDev && (
+        <Paper shadow="xs" withBorder p="xl">
+          <Typography variant="h5" gutterBottom>
+            Old Feature One
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            This is the legacy version of Feature One with basic tools and
+            layout.
+          </Typography>
+
+          <List>
+            <ListItem>
+              <ListItemIcon>
+                <FolderIcon color="action" />
+              </ListItemIcon>
+              <ListItemText primary="Basic data list" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                <BuildIcon color="action" />
+              </ListItemIcon>
+              <ListItemText primary="Minimal controls" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                <DescriptionIcon color="action" />
+              </ListItemIcon>
+              <ListItemText primary="Static content only" />
+            </ListItem>
+          </List>
+        </Paper>
+        // [!code ++]
+      )}
+      {/* USING THIS AS VISUAL REFERENCE TILL THE FULL MIGRATION IS COMPLETE */}
+      <MUIPaper elevation={3} sx={{ p: 3, borderLeft: '5px solid #f44336' }}>
+        <Typography variant="h5" gutterBottom>
+          Old Feature One
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          This is the legacy version of Feature One with basic tools and layout.
+        </Typography>
+
+        <List>
+          <ListItem>
+            <ListItemIcon>
+              <FolderIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Basic data list" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <BuildIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Minimal controls" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <DescriptionIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Static content only" />
+          </ListItem>
+        </List>
+      </MUIPaper>
+    </>
+  );
+}
+```
+
+That is it! This is the simplest of the flags we can implement. We can go one step ahead and create a wrapper component called `DevelopmentFlag`. Let us also separate out these into dedicated files.
+
+```tsx title="src/components/use-development-flag"
+export default function useDevelopmentFlag() {
+  return process.env.NODE_ENV === 'development';
+}
+```
+
+```tsx title="src/components/development-flag.tsx"
+import useDevelopmentFlag from './use-development-flag';
+
+export default function DevelopmentFlag({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const isDev = useDevelopmentFlag();
+
+  return isDev ? <>{children}</> : null;
+}
+```
+
+```tsx title="src/components/feature-one.tsx"
+import { Paper } from '@mantine/core';
+import BuildIcon from '@mui/icons-material/Build';
+import DescriptionIcon from '@mui/icons-material/Description';
+import FolderIcon from '@mui/icons-material/Folder';
+import {
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper as MUIPaper,
+  Typography,
+} from '@mui/material';
+import DevelopmentFlag from './development-flag';
+
+export default function FeatureOne() {
+  return (
+    <>
+      // [!code ++]
+      <DevelopmentFlag>
+        <Paper shadow="xs" withBorder p="xl">
+          <Typography variant="h5" gutterBottom>
+            Old Feature One
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            This is the legacy version of Feature One with basic tools and
+            layout.
+          </Typography>
+
+          <List>
+            <ListItem>
+              <ListItemIcon>
+                <FolderIcon color="action" />
+              </ListItemIcon>
+              <ListItemText primary="Basic data list" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                <BuildIcon color="action" />
+              </ListItemIcon>
+              <ListItemText primary="Minimal controls" />
+            </ListItem>
+            <ListItem>
+              <ListItemIcon>
+                <DescriptionIcon color="action" />
+              </ListItemIcon>
+              <ListItemText primary="Static content only" />
+            </ListItem>
+          </List>
+        </Paper>
+        // [!code ++]
+      </DevelopmentFlag>
+      {/* USING THIS AS VISUAL REFERENCE TILL THE FULL MIGRATION IS COMPLETE */}
+      <MUIPaper elevation={3} sx={{ p: 3, borderLeft: '5px solid #f44336' }}>
+        <Typography variant="h5" gutterBottom>
+          Old Feature One
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          This is the legacy version of Feature One with basic tools and layout.
+        </Typography>
+
+        <List>
+          <ListItem>
+            <ListItemIcon>
+              <FolderIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Basic data list" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <BuildIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Minimal controls" />
+          </ListItem>
+          <ListItem>
+            <ListItemIcon>
+              <DescriptionIcon color="action" />
+            </ListItemIcon>
+            <ListItemText primary="Static content only" />
+          </ListItem>
+        </List>
+      </MUIPaper>
+    </>
+  );
+}
+```
+
+<Callout title="Why do we have a hook and a component for development flag?">
+  Not every thing in frontend development is UI-related. You might want to hide
+  some unfinished work within functions where the hook value helps.
+</Callout>
+
+Now, this is the simplest example of a development flag. Though the usecase is quite limited, we wanted you to know you can do something like this.
+
+In the next, section we will start using the core feature flags to release our `FeatureThree` component and in the further sections, our entire app and the layouts will be behind a feature flag.
