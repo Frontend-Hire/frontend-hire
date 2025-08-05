@@ -4,9 +4,9 @@
   "pages": [
     "overview",
     "problem",
-    "solution-part-1",
-    "solution-part-2",
-    "solution-part-3",
+    "separate-concerns",
+    "mock-service-worker",
+    "react-query",
     "summary"
   ]
 }
