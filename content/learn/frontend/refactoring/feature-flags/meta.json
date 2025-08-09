@@ -8,5 +8,6 @@
     "feature-flags",
     "fallback-and-server-flags",
     "summary"
-  ]
+  ],
+  "isNew": true
 }
