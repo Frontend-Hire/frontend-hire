@@ -1,0 +1,139 @@
+---
+title: Fallback and Server Side Flags
+description: Adding fallback support to simplify feature toggle
+---
+
+Let us add one more option where we let the feature flag take a fallback component.
+
+```tsx title="src/utils/feature-flag.tsx"
+import React from 'react';
+import { useSearchParams } from 'react-router';
+
+type StorageType = 'localStorage' | 'sessionStorage' | undefined;
+
+type FeatureFlag = {
+  enableCondition?: boolean;
+  featureName?: string;
+  persistTo?: StorageType;
+};
+
+// Check this issue: https://github.com/ArnaudBarre/eslint-plugin-react-refresh/issues/84
+// eslint-disable-next-line react-refresh/only-export-components
+export function useFeatureFlag({
+  enableCondition,
+  featureName,
+  persistTo,
+}: FeatureFlag) {
+  const [searchParams] = useSearchParams();
+
+  const storedValue =
+    persistTo && featureName
+      ? window[persistTo].getItem(`featureFlag:${featureName}`)
+      : null;
+  const isStoredEnabled = storedValue === 'true';
+
+  const rawParam = featureName ? searchParams.get(featureName) : null;
+  const isFeatureParamEnabled =
+    rawParam !== null ? rawParam === 'true' : undefined;
+
+  React.useEffect(() => {
+    if (persistTo && featureName && isFeatureParamEnabled !== undefined) {
+      window[persistTo].setItem(
+        `featureFlag:${featureName}`,
+        String(isFeatureParamEnabled),
+      );
+    }
+  }, [persistTo, featureName, isFeatureParamEnabled]);
+
+  if (enableCondition || isFeatureParamEnabled || isStoredEnabled) {
+    return true;
+  }
+
+  return false;
+}
+
+export default function FeatureFlag({
+  enableCondition,
+  featureName,
+  children,
+  // [!code ++]
+  fallback,
+  persistTo,
+  // [!code highlight]
+}: FeatureFlag & { children?: React.ReactNode; fallback?: React.ReactNode }) {
+  const isEnabled = useFeatureFlag({ enableCondition, featureName, persistTo });
+
+  if (isEnabled) {
+    return <>{children || null}</>;
+  }
+
+  // [!code highlight]
+  return fallback || null;
+}
+```
+
+This allows us to use the `FeatureFlag` API like this:
+
+```tsx
+<FeatureFlag featureName="feature-two" fallback={<OldFeatureTwo />}>
+  <NewFeatureTwo />
+</FeatureFlag>
+```
+
+This is quite useful when one feature replaces an legacy or different feature. After a week of testing, you can go and directly remove the flag:
+
+```tsx
+// [!code --]
+<FeatureFlag featureName="feature-two" fallback={<OldFeatureTwo />}>
+  <NewFeatureTwo />
+  // [!code --]
+</FeatureFlag>
+```
+
+## Why feature-one.tsx and FeatureTwo.tsx?
+
+If you remember, we had two files named quite different. This was intentional and the intention was to teach you that sometimes, you can use a different naming convention when refactoring the whole codebase to a v2 version. This has to be discussed with your team and ensure any lint rules that complain about having such a convention are turned off.
+
+But we have found that using different conventions helps establish a good boundary when refactoring.
+
+## Feature Flagging can (and should) be done on the server side too
+
+Everything we've done so far has been **client-side**. The browser decides which features to show, often based on URL params, local conditions, or persisted values in storage.
+That's perfect for internal testing and small rollouts, but once you start releasing to real users, you'll often want the **server** to be the source of truth.
+
+Why server-side feature flags?
+
+- **Consistent experience across devices**: The flag's state isn't tied to a single browser or session.
+- **Dynamic targeting**: You can enable features based on user ID, subscription tier, geography, or A/B testing groups.
+- **Instant toggling**: Turn a feature on or off for everyone without needing to deploy new frontend code.
+
+### A typical server-side flow
+
+1. **Server stores flag states**: This could be in a database, a config file, or a feature flag service like LaunchDarkly, Unleash, or Flagsmith.
+2. **Frontend requests user + flags**: When fetching the user profile (like we did with `/profile` earlier), the API can also return a list of active feature flags.
+3. **Frontend renders accordingly**: The `FeatureFlag` component can read from that API response instead of only from search params or storage.
+
+Example API response:
+
+```json
+{
+  "id": "12345",
+  "firstName": "John",
+  "flags": {
+    "feature-three": true,
+    "new-dashboard": false
+  }
+}
+```
+
+Example integration:
+
+```tsx
+<FeatureFlag enableCondition={profile?.flags['feature-three']}>
+  <FeatureThree />
+</FeatureFlag>
+```
+
+This way, you can toggle features for all or specific users without redeploying your frontend, and without relying on users to pass `?feature-three=true` in their URLs.
+
+At this point, your code should be a good match to the branch of the repository: [3-fallback](https://github.com/yaralahruthik/refactoring-feature-flags/tree/3-fallback)

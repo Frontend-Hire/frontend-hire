@@ -24,7 +24,7 @@ export default async function Page(props: {
   const MDXContent = page.data.body;
 
   const time =
-    process.env.NODE_ENV === 'development'
+    process.env.NODE_ENV !== 'production'
       ? null
       : await getGithubLastEdit({
           owner: 'yaralahruthik',

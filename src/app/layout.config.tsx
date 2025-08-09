@@ -70,6 +70,11 @@ export const baseOptions: BaseLayoutProps = {
     },
     {
       type: 'main',
+      text: 'Support Us',
+      url: 'https://www.buymeacoffee.com/iamyhr',
+    },
+    {
+      type: 'main',
       text: 'Advertise',
       url: '/advertise-with-us',
     },

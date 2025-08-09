@@ -1,0 +1,86 @@
+---
+title: Overview
+description: Use different feature flags to ease the development or feature release process.
+---
+
+In this refactoring series, you will learn the fundamentals of feature flags and the quickest flags you can build right away!
+
+Specifically, we will build the following components and hooks for flagging:
+
+- `useDevelopmentFlag` and `DevelopmentFlag`
+- `useFeatureFlag` and `FeatureFlag`
+
+But first, let us understand the core fundamental of a feature flag.
+
+## What is a Feature Flag?
+
+At its core, it is a condition that decides whether something is active or not.
+
+```ts
+const isNewButton = useFlag('new-button');
+
+if (isNewButton) {
+  return; // New Button
+} else {
+  return; // Existing Button
+}
+```
+
+You can extend this fundamental to more complex scenarios such as A/B testing, phased rollouts, etc.
+
+Yes, that's it! Nothing special about it. But it is an indispensable tool when it comes to refactoring codebases—especially legacy ones.
+
+## Starter Code
+
+The code is in this repo: [0-init](https://github.com/Frontend-Hire/refactoring-feature-flags)
+
+### Getting Started
+
+1. **Clone the repository:**
+
+```sh
+git clone https://github.com/Frontend-Hire/refactoring-feature-flags.git
+cd refactoring-feature-flags
+```
+
+2. **Install dependencies using `pnpm`:**
+
+```sh
+pnpm install
+```
+
+3. **Run the development server:**
+
+```sh
+pnpm dev
+```
+
+Your project should now be running at `http://localhost:5173` (or the port shown in your terminal).
+
+We've created a dummy project that utilizes [`MUI v5`](https://v5.mui.com/material-ui/getting-started/), and by the end, we'll deprecate `MUI v5` in favor of [`Mantine`](https://mantine.dev/). The choice of `Mantine` is just an example—you can essentially replace any library this way with another.
+
+<Callout title='Deprecation or Replacement?'>
+  There is a high possibility that you might have two UI libraries coexisting during such a migration. That's okay, depending on the size of the team. Smaller teams might need to hold on to the old UI library for a while, whereas larger teams can **replace** it all at once.
+
+So, here, we **deprecate** the old UI for new features and use the new UI for all new features.
+
+</Callout>
+
+### Why not just upgrade MUI v5 to v6 or v7?
+
+Well, from our experience, such codebases are often quite out of control, and replacement is usually far easier than upgrades when it comes to UI libraries. Here are the top two reasons:
+
+1. Upgrades can cause regressions across the app, while replacement is much more controlled.
+2. Customizing MUI to fit your new design is often more painful than simply bringing in a library that already aligns with it.
+
+But before you decide on such a migration in a production codebase, discuss it with your team and proceed accordingly.
+
+Note that these kinds of decisions—like choosing a completely different UI or routing library—are quite common at startups. During early growth, teams often prioritize shipping features over polishing the underlying architecture or design.
+
+<Callout title="Material UI is a great library" type="warn">
+  But its design tends to look very Google-like and less polished compared to
+  other libraries. In our experience, many MUI projects end up becoming messy,
+  making upgrades to newer versions extremely painful.
+</Callout>
+
+Great, in the next section, we will clone the starter project, and try to understand what we want to do!

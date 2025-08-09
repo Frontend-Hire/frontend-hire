@@ -1,0 +1,12 @@
+{
+  "title": "Feature Flags",
+  "description": "Use different feature flags to ease the development or feature release process.",
+  "pages": [
+    "overview",
+    "understanding-the-codebase",
+    "development-flags",
+    "feature-flags",
+    "fallback-and-server-flags",
+    "summary"
+  ]
+}

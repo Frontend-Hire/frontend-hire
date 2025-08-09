@@ -1,0 +1,42 @@
+---
+title: Understanding the Codebase
+description: A quick overview of the codebase to understand our objectives!
+---
+
+## Project Structure
+
+These are the major files in our project. If you look at the `components` folder, you'll notice two feature components with different naming conventions: `feature-one.tsx` and `FeatureTwo.tsx`. This is intentional, and we'll cover this soon!
+
+<Files>
+  <Folder name="src" defaultOpen>
+    <Folder name="components" defaultOpen>
+      <File name="feature-one.tsx" />
+      <File name="FeatureTwo.tsx" />
+    </Folder>
+    <Folder name="layouts" defaultOpen>
+      <File name="app-layout.tsx" />
+      <File name="auth-layout.tsx" />
+    </Folder>
+    <Folder name="pages" defaultOpen>
+      <File name="about.tsx" />
+      <File name="home.tsx" />
+      <File name="login.tsx" />
+      <File name="register.tsx" />
+    </Folder>
+    <File name="App.tsx" />
+    <File name="index.css" />
+    <File name="main.tsx" />
+  </Folder>
+</Files>
+
+### Run the Project
+
+Run the project and view our UI (the YouTube video shows this):
+
+```sh
+pnpm dev
+```
+
+This is a fairly simple app with two auth pages: `Login` and `Register`, and two app pages: `Home` and `About`. They are also separated by two different layout files: `AuthLayout` and `AppLayout`.
+
+Great, go through the rest of the files at ease but in the next section, we will start building out our flags.

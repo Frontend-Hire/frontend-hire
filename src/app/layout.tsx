@@ -29,6 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         data-domain="frontendhire.com"
         src="https://plausible.withyhr.com/js/script.js"
       ></Script>
+
       <body className="flex min-h-screen flex-col">
         <TopBannerAdvertisement advertisement={ADVERTISEMENTS.TOP_BANNER} />
         <RootProvider>{children}</RootProvider>
