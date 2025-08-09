@@ -361,3 +361,414 @@ export default function About() {
   this feature could be at just a single place or at multiple places with
   different layouts. You should handle such scenarios as required.
 </Callout>
+
+## But the team still can't use this feature internally
+
+We pushed this feature to a specific user. But our entire team wants to use it now. We can obviously add all their ids but instead putting it behind a search param would be a lot cleaner and simpler. Let us update our feature flag now.
+
+Do note that the way you access search params would depend on the routing library or logic you have.
+
+```ts title="src/components/use-feature-flag.ts"
+// [!code ++]
+import { useSearchParams } from 'react-router';
+
+export default function useFeatureFlag({
+  enableCondition,
+  // [!code ++]
+  featureName,
+}: {
+  enableCondition?: boolean;
+  // [!code ++]
+  featureName?: string;
+}) {
+  // [!code ++]
+  const [searchParams] = useSearchParams();
+
+  // [!code ++:3]
+  const isFeatureParamEnabled = featureName
+    ? searchParams.get(featureName) === 'true'
+    : undefined;
+
+  // [!code highlight]
+  if (enableCondition || isFeatureParamEnabled) {
+    return true;
+  }
+
+  return false;
+}
+```
+
+```tsx title="src/components/feature-flag.tsx"
+import useFeatureFlag from './use-feature-flag';
+
+export default function FeatureFlag({
+  enableCondition,
+  // [!code ++]
+  featureName,
+  children,
+}: {
+  enableCondition?: boolean;
+  // [!code ++]
+  featureName?: string;
+  children?: React.ReactNode;
+}) {
+  // [!code highlight]
+  const isEnabled = useFeatureFlag({ enableCondition, featureName });
+
+  if (isEnabled) {
+    return <>{children || null}</>;
+  }
+
+  return null;
+}
+```
+
+We simply design our feature flag API to take an optional `featureName`, and check if this is set to true in the searchParams we enable the feature.
+
+```tsx title="src/pages/home.tsx"
+// Code omitted for brevity
+
+export default function Home() {
+  // Code omitted for brevity
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      {/* Code omitted for brevity */}
+
+      <FeatureFlag
+        enableCondition={profile?.id === '12345'}
+        // [!code ++]
+        featureName="feature-three"
+      >
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+      </FeatureFlag>
+
+      {/* Code omitted for brevity */}
+    </Paper>
+  );
+}
+```
+
+```tsx title="src/pages/about.tsx"
+// Code omitted for brevity
+
+export default function About() {
+  // Code omitted for brevity
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      {/* Code omitted for brevity */}
+
+      <FeatureFlag
+        enableCondition={profile?.id === '12345'}
+        // [!code ++]
+        featureName="feature-three"
+      >
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+      </FeatureFlag>
+
+      {/* Code omitted for brevity */}
+    </Paper>
+  );
+}
+```
+
+That is it now anyone can set the searchParam for this feature `?feature-three=true` and they'll see the feature. You can test it by updating the profile id so it is not enabled for the current user through `enableCondition`.
+
+```ts title="src/mocks/handlers.ts"
+import { http, HttpResponse } from 'msw';
+
+const FAKE_PROFILE = {
+  id: '1234', // [!code highlight]
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export const handlers = [
+  http.get('http://localhost:9000/profile', () => {
+    return HttpResponse.json(FAKE_PROFILE, { status: 200 });
+  }),
+];
+```
+
+And then navigate to `http://localhost:5173/?feature-three=true`
+
+## But further navigation loses the flag
+
+Now if you try to go to other pages then the searchParam is lost so is the flag for the feature. Let us add an option to persist the flag.
+
+```ts tiitle="src/components/use-feature-flag.ts"
+// [!code ++]
+import React from 'react';
+import { useSearchParams } from 'react-router';
+
+// [!code ++]
+type StorageType = 'localStorage' | 'sessionStorage' | undefined;
+
+export default function useFeatureFlag({
+  enableCondition,
+  featureName,
+  // [!code ++]
+  persistTo,
+}: {
+  enableCondition?: boolean;
+  featureName?: string;
+  // [!code ++]
+  persistTo?: StorageType;
+}) {
+  const [searchParams] = useSearchParams();
+
+  // [!code ++:5]
+  const storedValue =
+    persistTo && featureName
+      ? window[persistTo].getItem(`featureFlag:${featureName}`)
+      : null;
+  const isStoredEnabled = storedValue === 'true';
+
+  // [!code ++:3]
+  const rawParam = featureName ? searchParams.get(featureName) : null;
+  const isFeatureParamEnabled =
+    rawParam !== null ? rawParam === 'true' : undefined;
+
+  // [!code ++:8]
+  React.useEffect(() => {
+    if (persistTo && featureName && isFeatureParamEnabled !== undefined) {
+      window[persistTo].setItem(
+        `featureFlag:${featureName}`,
+        String(isFeatureParamEnabled),
+      );
+    }
+  }, [persistTo, featureName, isFeatureParamEnabled]);
+
+  // [!code highlight]
+  if (enableCondition || isFeatureParamEnabled || isStoredEnabled) {
+    return true;
+  }
+
+  return false;
+}
+```
+
+```tsx title="src/components/feature-flag.tsx"
+import useFeatureFlag from './use-feature-flag';
+
+// [!code ++]
+type StorageType = 'localStorage' | 'sessionStorage' | undefined;
+
+export default function FeatureFlag({
+  enableCondition,
+  featureName,
+  children,
+  persistTo,
+}: {
+  enableCondition?: boolean;
+  featureName?: string;
+  children?: React.ReactNode;
+  // [!code ++]
+  persistTo?: StorageType;
+}) {
+  // [!code highlight]
+  const isEnabled = useFeatureFlag({ enableCondition, featureName, persistTo });
+
+  if (isEnabled) {
+    return <>{children || null}</>;
+  }
+
+  return null;
+}
+```
+
+```tsx title="src/pages/home.tsx"
+// Code omitted for brevity
+
+export default function Home() {
+  // Code omitted for brevity
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      {/* Code omitted for brevity */}
+
+      <FeatureFlag
+        enableCondition={profile?.id === '12345'}
+        featureName="feature-three"
+        // [!code ++]
+        persistTo="sessionStorage"
+      >
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+      </FeatureFlag>
+
+      {/* Code omitted for brevity */}
+    </Paper>
+  );
+}
+```
+
+```tsx title="src/pages/about.tsx"
+// Code omitted for brevity
+
+export default function About() {
+  // Code omitted for brevity
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      {/* Code omitted for brevity */}
+
+      <FeatureFlag
+        enableCondition={profile?.id === '12345'}
+        featureName="feature-three"
+        // [!code ++]
+        persistTo="sessionStorage"
+      >
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+      </FeatureFlag>
+
+      {/* Code omitted for brevity */}
+    </Paper>
+  );
+}
+```
+
+Previously, if a feature flag was enabled using a search parameter like
+`?feature-three=true`, it would disappear as soon as the user navigated to another page without that query parameter in the URL.
+
+That meant the flag would reset to `false` unless the `enableCondition` matched again which is not great for features you want to keep on during a session or across browser restarts.
+
+With the new `persistTo` option, we can:
+
+- Store the flag state in `localStorage` (survives browser restarts) or `sessionStorage` (resets on tab close).
+- Keep the flag enabled even when navigating to pages that don't have the search param.
+- Only overwrite the stored value when the URL explicitly sets the param.
+
+Basically, the **search params now act as a trigger**, and **storage acts as the memory** for your feature flags. This ensures smoother internal testing and avoids having to repeatedly enable a feature while moving around your app.
+
+Great, this is now a very good feature flaggin system we have and should suffice for most usecases on the client side.
+
+But if you notice having the hook and the component in different files is adding a lot of friction while working. Maybe having them in a single file would be a lot cleaner. Let us do that refactoring now.
+
+## Collacting Feature Flag Logic
+
+Let us bring those files together into a single file and also move this file to a utils folder.
+
+```tsx title="src/utils/feature-flag.tsx"
+import React from 'react';
+import { useSearchParams } from 'react-router';
+
+type StorageType = 'localStorage' | 'sessionStorage' | undefined;
+
+type FeatureFlag = {
+  enableCondition?: boolean;
+  featureName?: string;
+  persistTo?: StorageType;
+};
+
+// Check this issue: https://github.com/ArnaudBarre/eslint-plugin-react-refresh/issues/84
+// eslint-disable-next-line react-refresh/only-export-components
+export function useFeatureFlag({
+  enableCondition,
+  featureName,
+  persistTo,
+}: FeatureFlag) {
+  const [searchParams] = useSearchParams();
+
+  const storedValue =
+    persistTo && featureName
+      ? window[persistTo].getItem(`featureFlag:${featureName}`)
+      : null;
+  const isStoredEnabled = storedValue === 'true';
+
+  const rawParam = featureName ? searchParams.get(featureName) : null;
+  const isFeatureParamEnabled =
+    rawParam !== null ? rawParam === 'true' : undefined;
+
+  React.useEffect(() => {
+    if (persistTo && featureName && isFeatureParamEnabled !== undefined) {
+      window[persistTo].setItem(
+        `featureFlag:${featureName}`,
+        String(isFeatureParamEnabled),
+      );
+    }
+  }, [persistTo, featureName, isFeatureParamEnabled]);
+
+  if (enableCondition || isFeatureParamEnabled || isStoredEnabled) {
+    return true;
+  }
+
+  return false;
+}
+
+export default function FeatureFlag({
+  enableCondition,
+  featureName,
+  children,
+  persistTo,
+}: FeatureFlag & { children?: React.ReactNode }) {
+  const isEnabled = useFeatureFlag({ enableCondition, featureName, persistTo });
+
+  if (isEnabled) {
+    return <>{children || null}</>;
+  }
+
+  return null;
+}
+```
+
+Do note that you will see an eslint warning which we disabled. In fact, the HMR here is a bit broken because of our collacation and for this file which would infrequently change it is completely fine! Let us update our imports and clean up things.
+
+```tsx title="src/pages/home.tsx"
+// Code ommited for brevity
+
+// [!code highlight]
+import FeatureFlag from '@/utils/feature-flag';
+
+// Code ommited for brevity
+```
+
+```tsx title="src/pages/about.tsx"
+// Code ommited for brevity
+
+// [!code highlight]
+import FeatureFlag from '@/utils/feature-flag';
+
+// Code ommited for brevity
+```
+
+Let us also collocate our development flags:
+
+```tsx title="src/utils/development-flag.tsx"
+// Check this issue: https://github.com/ArnaudBarre/eslint-plugin-react-refresh/issues/84
+// eslint-disable-next-line react-refresh/only-export-components
+export function useDevelopmentFlag() {
+  return process.env.NODE_ENV === 'development';
+}
+
+export default function DevelopmentFlag({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const isDev = useDevelopmentFlag();
+
+  return isDev ? <>{children}</> : null;
+}
+```
+
+And fix our imports in `feature-one.tsx`
+
+```tsx title="src/components/feature-one.tsx"
+// Code ommited for brevity
+
+// [!code highlight]
+import DevelopmentFlag from '@/utils/development-flag';
+
+// Code ommited for brevity
+```
