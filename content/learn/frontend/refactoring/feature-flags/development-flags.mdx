@@ -465,4 +465,11 @@ export default function FeatureOne() {
 
 Now, this is the simplest example of a development flag. Though the usecase is quite limited, we wanted you to know you can do something like this.
 
+<Callout title="Try it out">
+  You can verify the flag working or not by either building the app with `pnpm
+  build && pnpm preview` or just flip the condition to check during development.
+  We recommend the former approach of building as it would help check for any
+  leaks.
+</Callout>
+
 In the next, section we will start using the core feature flags to release our `FeatureThree` component and in the further sections, our entire app and the layouts will be behind a feature flag.
