@@ -11,7 +11,7 @@ Feature flags help you do a lot:
 - Release features for specific users or clients.
 
 <Callout type="warn">
-  Our experience of faeture flagging comes from startups where you might lack QA
+  Our experience of feature flagging comes from startups where you might lack QA
   teams. You won't have the bandwidth to also test all kinds of scenarios. The
   best thing to do is release it internally, while letting the team use them
   before releasing it for everyone.
@@ -238,16 +238,22 @@ export default function useFeatureFlag({
 ```
 
 ```tsx tiitle="src/components/feature-flag.tsx"
-export default function useFeatureFlag({
+import useFeatureFlag from './use-feature-flag';
+
+export default function FeatureFlag({
   enableCondition,
+  children,
 }: {
   enableCondition?: boolean;
+  children?: React.ReactNode;
 }) {
-  if (enableCondition) {
-    return true;
+  const isEnabled = useFeatureFlag({ enableCondition });
+
+  if (isEnabled) {
+    return <>{children || null}</>;
   }
 
-  return false;
+  return null;
 }
 ```
 
@@ -655,7 +661,7 @@ Great, this is now a very good feature flaggin system we have and should suffice
 
 But if you notice having the hook and the component in different files is adding a lot of friction while working. Maybe having them in a single file would be a lot cleaner. Let us do that refactoring now.
 
-## Collacting Feature Flag Logic
+## Collocate Feature Flag Logic
 
 Let us bring those files together into a single file and also move this file to a utils folder.
 
