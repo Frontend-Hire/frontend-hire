@@ -1,0 +1,363 @@
+---
+title: Feature Flags
+description: The flags that make your life a lot easier
+---
+
+In the last section, we saw the simplest flags through `DevelopmentFlag` and `useDevelopmentFlag`. In this section, we will build the feature flags that you will use a lot more often.
+
+Feature flags help you do a lot:
+
+- Release features internally first
+- Release features for specific users or clients.
+
+<Callout type="warn">
+  Our experience of faeture flagging comes from startups where you might lack QA
+  teams. You won't have the bandwidth to also test all kinds of scenarios. The
+  best thing to do is release it internally, while letting the team use them
+  before releasing it for everyone.
+</Callout>
+
+## Building the new `FeatureThree` with a flag
+
+Let us quickly build a dummy feature.
+
+```tsx title="src/components/feature-three.tsx"
+import { Card, Text } from '@mantine/core';
+
+export default function FeatureThree() {
+  return (
+    <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <Text fw={500}>New Feature Three</Text>
+
+      <Text size="sm" c="dimmed">
+        This is the modern version of Feature Three with advanced tools and and
+        layout. But this should be behind a feature flag.
+      </Text>
+    </Card>
+  );
+}
+```
+
+We will first render it normally on our home and about pages.
+
+```tsx title="src/pages/home.tsx"
+import FeatureOne from '@/components/feature-one';
+// [!code ++]
+import FeatureThree from '@/components/feature-three';
+import FeatureTwo from '@/components/FeatureTwo';
+import { Box, Button, Paper, Typography } from '@mui/material';
+import { Link } from 'react-router';
+
+export default function Home() {
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Welcome to the Home Page
+      </Typography>
+      <Typography variant="body1" paragraph>
+        This is a simple home page using Material UI v5 components.
+      </Typography>
+      <Box mt={2}>
+        <FeatureOne />
+      </Box>
+      <Box mt={2}>
+        <FeatureTwo />
+      </Box>
+      // [!code ++:3]
+      <Box mt={2}>
+        <FeatureThree />
+      </Box>
+      <Box mt={2}>
+        <Button component={Link} to="/about">
+          Go to About Page
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+```
+
+```tsx title="src/pages/about.tsx"
+import FeatureOne from '@/components/feature-one';
+// [!code ++]
+import FeatureThree from '@/components/feature-three';
+import FeatureTwo from '@/components/FeatureTwo';
+import { Box, Button, Paper, Typography } from '@mui/material';
+import { Link } from 'react-router';
+
+export default function About() {
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Welcome to the About Page
+      </Typography>
+      <Typography variant="body1" paragraph>
+        This is a simple about page using Material UI v5 components.
+      </Typography>
+      <Box mt={2}>
+        <FeatureOne />
+      </Box>
+      <Box mt={2}>
+        <FeatureTwo />
+      </Box>
+      // [!code ++:3]
+      <Box mt={2}>
+        <FeatureThree />
+      </Box>
+      <Box mt={2}>
+        <Button component={Link} to="/">
+          Go to Home Page
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+```
+
+Great, but let us put this behind a feature flag now. Unlike our development flags, these flags would need a configurable API to control them.
+
+- We might need to enable the flag based on an ID.
+- We might need to enable the flag based on a search param.
+- If we enable the flag with a search param, we might also want to persist it.
+
+But let us get started based on an ID, we'll quickly build out an API endpoint that gives us user details along with an ID.
+
+<Callout title="We use MSW to simulate an API">
+  Do not worry, we won't be setting up a node server. Instead we use MSW to mock
+  an API. The MSW and the endpoint at `http://localhost:9000/profile` is already
+  setup for you. [Check our free
+  course](/learn/frontend/refactoring/profile-page/overview) if you want to
+  learn more about MSW and React Query.
+</Callout>
+
+```tsx title="src/api/profile.ts"
+export type ProfileType = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age: number;
+  companyName: string;
+};
+
+export async function fetchProfile() {
+  const data: ProfileType = await fetch('http://localhost:9000/profile').then(
+    (res) => res.json(),
+  );
+
+  return data;
+}
+```
+
+We now use the API call on the home page and use the ID to conditionally render the feature.
+
+```tsx title="src/pages/home.tsx"
+// [!code ++]
+import { fetchProfile, type ProfileType } from '@/api/profile';
+import FeatureOne from '@/components/feature-one';
+import FeatureThree from '@/components/feature-three';
+import FeatureTwo from '@/components/FeatureTwo';
+import { Box, Button, Paper, Typography } from '@mui/material';
+import React from 'react';
+import { Link } from 'react-router';
+
+export default function Home() {
+  // [!code ++]
+  const [profile, setProfile] = React.useState<ProfileType | null>(null);
+
+  // [!code ++:5]
+  React.useEffect(() => {
+    fetchProfile().then((data) => {
+      setProfile(data);
+    });
+  }, []);
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Welcome to the Home Page
+      </Typography>
+      <Typography variant="body1" paragraph>
+        This is a simple home page using Material UI v5 components.
+      </Typography>
+      <Box mt={2}>
+        <FeatureOne />
+      </Box>
+      <Box mt={2}>
+        <FeatureTwo />
+      </Box>
+      // [!code ++:5]
+      {profile?.id === '12345' && (
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+      )}
+      <Box mt={2}>
+        <Button component={Link} to="/about">
+          Go to About Page
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+```
+
+That is it. You can test this out by playing around return data from our mocked handler at `src/mocks/handlers.ts`
+
+```ts title="src/mocks/handlers.ts"
+import { http, HttpResponse } from 'msw';
+
+const FAKE_PROFILE = {
+  id: '12345', // Play here // [!code highlight]
+  firstName: 'John',
+  lastName: 'Doe',
+  age: 30,
+  companyName: 'OpenAI',
+};
+
+export const handlers = [
+  http.get('http://localhost:9000/profile', () => {
+    return HttpResponse.json(FAKE_PROFILE, { status: 200 });
+  }),
+];
+```
+
+Let us now clean up and build out a hook and a component just like our development flags.
+
+```ts tiitle="src/components/use-feature-flag.ts"
+export default function useFeatureFlag({
+  enableCondition,
+}: {
+  enableCondition?: boolean;
+}) {
+  if (enableCondition) {
+    return true;
+  }
+
+  return false;
+}
+```
+
+```tsx tiitle="src/components/feature-flag.tsx"
+export default function useFeatureFlag({
+  enableCondition,
+}: {
+  enableCondition?: boolean;
+}) {
+  if (enableCondition) {
+    return true;
+  }
+
+  return false;
+}
+```
+
+```tsx title="src/pages/home.tsx"
+import { fetchProfile, type ProfileType } from '@/api/profile';
+// [!code ++]
+import FeatureFlag from '@/components/feature-flag';
+import FeatureOne from '@/components/feature-one';
+import FeatureThree from '@/components/feature-three';
+import FeatureTwo from '@/components/FeatureTwo';
+import { Box, Button, Paper, Typography } from '@mui/material';
+import React from 'react';
+import { Link } from 'react-router';
+export default function Home() {
+  const [profile, setProfile] = React.useState<ProfileType | null>(null);
+
+  React.useEffect(() => {
+    fetchProfile().then((data) => {
+      setProfile(data);
+    });
+  }, []);
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Welcome to the Home Page
+      </Typography>
+      <Typography variant="body1" paragraph>
+        This is a simple home page using Material UI v5 components.
+      </Typography>
+      <Box mt={2}>
+        <FeatureOne />
+      </Box>
+      <Box mt={2}>
+        <FeatureTwo />
+      </Box>
+      // [!code highlight]
+      <FeatureFlag enableCondition={profile?.id === '12345'}>
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+        // [!code highlight]
+      </FeatureFlag>
+      <Box mt={2}>
+        <Button component={Link} to="/about">
+          Go to About Page
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+```
+
+That is it! Let us also use this flag on the about page.
+
+```tsx title="src/pages/about.tsx"
+// [!code ++:2]
+import { fetchProfile, type ProfileType } from '@/api/profile';
+import FeatureFlag from '@/components/feature-flag';
+import FeatureOne from '@/components/feature-one';
+import FeatureThree from '@/components/feature-three';
+import FeatureTwo from '@/components/FeatureTwo';
+import { Box, Button, Paper, Typography } from '@mui/material';
+import React from 'react';
+import { Link } from 'react-router';
+
+export default function About() {
+  const [profile, setProfile] = React.useState<ProfileType | null>(null);
+
+  React.useEffect(() => {
+    fetchProfile().then((data) => {
+      setProfile(data);
+    });
+  }, []);
+
+  return (
+    <Paper elevation={3} sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Welcome to the About Page
+      </Typography>
+      <Typography variant="body1" paragraph>
+        This is a simple about page using Material UI v5 components.
+      </Typography>
+      <Box mt={2}>
+        <FeatureOne />
+      </Box>
+      <Box mt={2}>
+        <FeatureTwo />
+      </Box>
+      // [!code ++]
+      <FeatureFlag enableCondition={profile?.id === '12345'}>
+        <Box mt={2}>
+          <FeatureThree />
+        </Box>
+        // [!code ++]
+      </FeatureFlag>
+      <Box mt={2}>
+        <Button component={Link} to="/">
+          Go to Home Page
+        </Button>
+      </Box>
+    </Paper>
+  );
+}
+```
+
+<Callout title="Repeating code?">
+  It might look that this is duplicate code, and using the feature flag right
+  inside the `FeatureThree` component would be cleaner, and you are right! But
+  this is a simple example to help you understand the fundamental. In reality,
+  this feature could be at just a single place or at multiple places with
+  different layouts. You should handle such scenarios as required.
+</Callout>
