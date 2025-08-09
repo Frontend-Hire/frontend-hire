@@ -1,0 +1,7 @@
+{
+  "title": "Artificial Intelligence (AI)",
+  "description": "Learn Applied AI Skills",
+  "icon": "Brain",
+  "root": true,
+  "pages": ["---Introduction---", "index"]
+}

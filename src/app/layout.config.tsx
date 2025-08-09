@@ -52,6 +52,11 @@ export const baseOptions: BaseLayoutProps = {
           url: '/learn/software-engineering-fundamentals',
         },
         {
+          text: 'Applied AI',
+          description: 'Learn Applied AI Skills',
+          url: '/learn/ai',
+        },
+        {
           text: 'Product',
           description: 'Learn product skills',
           url: '/learn/product',
