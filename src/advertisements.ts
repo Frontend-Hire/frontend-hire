@@ -32,12 +32,13 @@ export type ContentOverviewKeyType =
   | 'frontend-courses-login-register-flow-overview'
   | 'frontend-courses-dynamic-pricing-page-overview'
   | 'frontend-system-design-dynamic-pricing-page-overview'
-  | 'frontend-refactoring-profile-page-overview';
+  | 'frontend-refactoring-profile-page-overview'
+  | 'frontend-refactoring-feature-flags-overview';
 
 export const ADVERTISEMENTS: AdvertisementType = {
   TOP_BANNER: {
     id: 'fh-stackpack',
-    content: 'We released a new course: Stackpack',
+    content: 'Our Feature Flags course is now live!',
     url: 'https://youtu.be/uA63G1pRchE',
   },
   HOME_PAGE: {
@@ -119,6 +120,17 @@ export const ADVERTISEMENTS: AdvertisementType = {
       type: 'CONTENT_OVERVIEW_PAGE',
     },
     'frontend-courses-dynamic-pricing-page-overview': {
+      id: 'affiliate-interview-ready-ai-engineering',
+      title: 'AI Engineering for Developers',
+      content:
+        "This is the best time to learn about AI. Good AI fundamentals make you a better developer and a product builder. We recommend you to checkout InterviewReady's AI Engineering course. It is a high-quality resource!",
+      cta: {
+        url: 'https://interviewready.io/checkout/?_aff=kkhqugif87496',
+        text: 'Checkout the course!',
+      },
+      type: 'CONTENT_OVERVIEW_PAGE',
+    },
+    'frontend-refactoring-feature-flags-overview': {
       id: 'affiliate-interview-ready-ai-engineering',
       title: 'AI Engineering for Developers',
       content:
