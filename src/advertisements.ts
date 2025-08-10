@@ -39,7 +39,7 @@ export const ADVERTISEMENTS: AdvertisementType = {
   TOP_BANNER: {
     id: 'fh-stackpack',
     content: 'Our Feature Flags course is now live!',
-    url: 'https://youtu.be/uA63G1pRchE',
+    url: 'https://youtu.be/MyEAsukNlYQ',
   },
   HOME_PAGE: {
     id: 'affiliate-interview-ready-ai-engineering',
