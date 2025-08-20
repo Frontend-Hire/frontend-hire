@@ -7,7 +7,7 @@ function SupportUsButton() {
   return (
     <Link
       href="https://www.buymeacoffee.com/iamyhr"
-      className="group relative mx-auto inline-block w-fit cursor-pointer rounded-full bg-slate-800 p-px text-xs leading-6 font-semibold text-white no-underline shadow-2xl shadow-zinc-900"
+      className="group relative mx-auto mt-4 inline-block w-fit cursor-pointer rounded-full bg-slate-800 p-px text-xs leading-6 font-semibold text-white no-underline shadow-2xl shadow-zinc-900 sm:mt-0"
     >
       <span className="absolute inset-0 overflow-hidden rounded-full">
         <span className="absolute inset-0 rounded-full bg-[image:radial-gradient(75%_100%_at_50%_0%,rgba(56,189,248,0.6)_0%,rgba(56,189,248,0)_75%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -52,7 +52,8 @@ export default function HomePage() {
         <div className="flex flex-col gap-4 sm:flex-row">
           <Link
             className={buttonVariants({ color: 'secondary' })}
-            href="/learn/frontend"
+            href="https://discord.gg/DWAVqksVtx"
+            target="_blank"
           >
             Join Discord Community
           </Link>

@@ -95,3 +95,7 @@ While these opportunities may not be your top priority, they can provide valuabl
 ---
 
 This blog post was quickly AI-generated using our notes from the live session. Do join our [discord community](https://discord.gg/DWAVqksVtx) to get first access to the live sessions.
+
+## What is an Open House?
+
+An Open House is a free, informal community call where anyone can join, ask questions about frontend or web development, and connect with others. If no questions come up, we dive into topics like JavaScript, React, Next.js, SvelteKit, Supabase, or whatever the group is interested in. It’s about learning together and building real connections beyond just LinkedIn or Twitter.
